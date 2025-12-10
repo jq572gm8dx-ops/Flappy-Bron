@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Flappy Bron Pixel Edition</title>
+<style>
+/* --- Custom Pixel Font (Optional but highly recommended) --- */
+/*
+If you have a pixel font file, you can embed it here:
+@font-face {
+    font-family: 'PixelFont';
+    src: url('path/to/your/pixel-font.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+For this example, we'll use a common monospaced font that looks somewhat pixelated.
+*/
+
+/* Global Styling for a pixelated, retro look */
+body {
+    background-color: #303030; /* Darker background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Press Start 2P', 'Consolas', monospace; /* Using a common pixel-like font, or 'PixelFont' if embedded */
+    color: #eee;
+    text-shadow: 2px 2px #000;
+}
+
+/* Canvas Styling - Pixelated background */
+canvas {
+    border: 4px solid #555; /* Thicker, pixelated border */
+    /* Pixelated sky background using gradient and repeating pattern */
+    background-image:url(Gemini_Generated_Image_x51mbwx51mbwx51m.png);
+    background-size:cover; /* Small repeating units for pixel effect */
+    background-repeat: no-repeat;
+    image-rendering: optimizeSpeed; 
+    image-rendering: -moz-crisp-edges; 
+    image-rendering: -webkit-optimize-contrast; 
+    image-rendering: optimize-contrast; /* CSS3 */
+    image-rendering: crisp-edges; /* Pixel-perfect rendering */
+    image-rendering: pixelated; /* Chrome, Edge, Opera */
+    display: block;
+    margin: 20px auto;
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: 100vw;
+    height: auto;
+    max-height: calc(100vh - 40px); /* keeps canvas inside viewport to avoid vertical scroll */
+    margin: 20px auto;
+    overflow: hidden;
+    max-width: 480px; /* default game canvas width */
+    height: auto;
+    cursor: pointer; /* indicates clickable for fullscreen toggle */
+    touch-action: manipulation;
+    transition: width .12s ease, height .12s ease, transform .12s ease;
+    /* CSS variables that can be toggled by JS when entering/exiting fullscreen */
+    --fs-width: 100vw;
+    --fs-height: 100vh;
+    box-shadow: 8px 8px 0px 0px #1a1a1a; /* Retro shadow effect */
+    max-width: 120vw;
+    height: auto;
+    border-radius: 0; /* No rounded corners for pixel art */
+}
+
+/* Menu Styling - Pixelated retro theme */
+#menu {
+     margin: 0;
+
+
+  background-image: url("Untitled\ design.png");
+  background-repeat: no-repeat;
+  background-position: center;
+background-size: cover;
+background-position: center center;
+background-repeat: no-repeat;
+box-sizing: border-box;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+position: fixed;
+inset: 0;
+width: 100vw;
+height: 100vh;
+margin: 0;
+ /* Darker menu background */
+    padding: 30px 40px;
+    border-radius: 0; /* No rounded corners */
+    box-shadow: 8px 8px 0px 0px #1a1a1a; /* Retro shadow */
+    border: 4px solid #555; /* Pixelated border */
+    text-transform: uppercase;
+}
+
+#menu h1 {
+    font-size: 3rem;
+    color: #00FF00; /* Neon green for title */
+    margin-bottom: 20px;
+    text-shadow: 4px 4px #000;
+    line-height: 1; /* Adjust line height for pixel fonts */
+}
+
+#highText {
+
+    font-size: 1.4rem;
+    color: #FFD700;
+    margin-top: 70px; /* Gold for high score */
+    margin-bottom: 40px;
+    font-weight: normal;
+    text-shadow: 2px 2px #000;
+}
+
+/* Button Styling - Pixelated start button with LeBron bird */
+button {
+    padding: 0; /* No padding directly on button */
+    border-radius: 0; 
+    border: none;
+    background: transparent; /* Transparent to show the pixel border and background */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px; /* Adjusted size for pixel button */
+    height: 200px;
+    line-height: 1;
+    position: relative;
+    outline: none; 
+    padding-top:360px;/* Remove default focus outline */
+}
+
+/* Pixel border effect for button */
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+     /* Neon green pixel border */
+    box-sizing: border-box;
+    pointer-events: none; /* Make sure it doesn't interfere with clicks */
+ /* Small pixel shadow */
+}
+
+button:active::before {
+    box-shadow: 0px 0px 0px 0px #000;
+    transform: translate(4px, 4px); /* Simulates button press */
+}
+
+/* Style the SVG/Icon inside the button */
+#startBtn svg {
+    width: 100px; /* Make the bird larger in the button */
+    height: 100px;
+    fill: none; /* SVG content will define its own colors */
+    display: block; /* Ensures SVG takes up space */
+    position: relative; /* Needed for z-index */
+    z-index: 1; /* Keep bird above button's pseudo-elements */
+}
+
+
+/* Message Box Styling - Pixelated game over screen */
+.message-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #222;
+    padding: 30px;
+    border-radius: 0;
+    box-shadow: 8px 8px 0px 0px #1a1a1a;
+    text-align: center;
+    z-index: 1000;
+    border: 4px solid #FF0000; /* Red pixel border */
+    display: none;
+    text-transform: uppercase;
+}
+.message-box h3 {
+    color: #FF0000; /* Red for game over title */
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px #000;
+}
+.message-box p {
+    color: #eee;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    text-shadow: 1px 1px #000;
+}
+.message-box button {
+    margin-top: 0; /* Reset margin */
+    width: auto;
+    height: auto;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    color: white;
+    background: #FF0000; /* Red button background */
+    border: 2px solid #a30000; /* Darker red border */
+    box-shadow: 4px 4px 0px 0px #000;
+    text-shadow: 1px 1px #000;
+}
+.message-box button::before { /* Remove the pseudo-element border for this button */
+    display: none;
+}
+.message-box button:active {
+    box-shadow: 0px 0px 0px 0px #000;
+    transform: translate(4px, 4px);
+}
+
+</style>
+</head>
+<body>
+
+<div id="menu">
+ 
+    <h2 id="highText">High Score: <b>0</b></h2>
+    <button id="startBtn">
+       <img style="width:100px;height: auto;" src="start.jpg" alt="">
+    </button>
+</div>
+
+<div id="messageBox" class="message-box">
+    <h3 id="messageTitle">GAME OVER!</h3>
+    <p id="messageBody"></p>
+    <button id="messageCloseBtn">OK</button>
+</div>
+
+<script>
+// Canvas and Game Variables
+var myGamePiece;
+var highScore = 0;
+var gameRunning = false;
+var myObstacles = [];
+var myScore;
+
+// --- Utility Functions ---
+
+function showMessage(title, body) {
+    document.getElementById('messageTitle').innerText = title;
+    document.getElementById('messageBody').innerHTML = body;
+    document.getElementById('messageBox').style.display = 'block';
+    
+    document.getElementById('menu').style.pointerEvents = 'none';
+    if (myGameArea.canvas.parentNode) {
+        myGameArea.canvas.style.pointerEvents = 'none';
+    }
+}
+
+function hideMessage() {
+    document.getElementById('messageBox').style.display = 'none';
+    document.getElementById('menu').style.pointerEvents = 'auto';
+    if (myGameArea.canvas.parentNode) {
+        myGameArea.canvas.style.pointerEvents = 'auto';
+    }
+}
+
+document.getElementById('messageCloseBtn').addEventListener('click', hideMessage);
+
+
+// --- Game Initialization and Flow ---
+
+function startGameFromMenu() {
+    hideMessage();
+    document.getElementById("menu").style.display = "none";
+    startGame();
+}
+
+function startGame() {
+    gameRunning = true;
+    myObstacles = []; 
+    
+    // Pixelated LeBron SVG - Base64 Encoded (Lakers Purple/Gold, including '23' on jersey)
+    const playerSvgData = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEwIiBmaWxsPSIjOTY0QjAwIi8+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjIiIGZpbGw9IiMwMDAwMDAiLz4KICA8cmVjdCB4PSIxMSIgeT0iMTEiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSIxNSIgeT0iMTEiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNGRkZGRkYiLz4KICA8cmVjdCB4PSI2IiB5PSIxOCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjgiIGZpbGw9IiM1NTI1ODMiLz4KICA8cmVjdCB4PSIxMCIgeT0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiNGRkM3MkMiLz4KICA8cmVjdCB4PSIxNCIgeT0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiNGRkM3MkMiLz4KICA8cmVjdCB4PSIyIiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgZmlsbD0iI0ZGQzcyQyIvPgogIDxyZWN0IHg9IjI2IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgZmlsbD0iI0ZGQzcyQyIvPgo8L3N2Zz4="; 
+
+    // Player Piece: width, height, image source, x, y, type="image"
+    myGamePiece = new component(40, 30, playerSvgData, 10, 120, "image"); 
+    myGamePiece.gravity = 0.15;
+    
+    myScore = new component("30px", "Press Start 2P", "black", 280, 40, "text"); /* Using pixel font for score */
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        
+        document.body.insertBefore(this.canvas, document.getElementById('menu'));
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+    },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+
+// --- Game Components (Player/Obstacle/Text/Image) ---
+
+function component(width, height, colorOrImgSrc, x, y, type) {
+    this.type = type;
+    this.score = 0;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;
+    this.x = x;
+    this.y = y;
+    this.gravity = 0;
+    this.gravitySpeed = 0;
+    
+    if (this.type === 'image') {
+        this.img = new Image();
+        this.img.src = colorOrImgSrc;
+        this.loaded = false;
+        this.img.onload = () => {
+            this.loaded = true;
+        };
+        this.color = "#964B00"; // Fallback color if image fails
+    } else {
+        this.color = colorOrImgSrc;
+    }
+
+
+    this.update = function() {
+        var ctx = myGameArea.context;
+        if (this.type === "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = this.color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else if (this.type === "image" && this.loaded) {
+            ctx.save();
+            
+            // Rotation for "flappy" effect
+            const rotationDegree = Math.min(Math.max(this.gravitySpeed * 10, -30), 45); 
+            
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            ctx.rotate(rotationDegree * Math.PI / 180);
+            
+            ctx.drawImage(this.img, -this.width / 2, -this.height / 2, this.width, this.height);
+            
+            ctx.restore();
+
+        } else {
+            // Draw for obstacles (pixelated dark green)
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    
+    this.newPos = function() {
+        this.gravitySpeed += this.gravity;
+        this.x += this.speedX;
+        this.y += this.speedY + this.gravitySpeed;
+        this.hitBottom();
+        this.hitTop();
+    }
+    
+    this.hitBottom = function() {
+        var rockbottom = myGameArea.canvas.height - this.height;
+        if (this.y > rockbottom) {
+            this.y = rockbottom;
+            this.gravitySpeed = 0;
+        }
+    }
+    
+    this.hitTop = function() {
+        if (this.y < 0) {
+            this.y = 0;
+            this.gravitySpeed = 0;
+        }
+    }
+    
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + this.width;
+        var mytop = this.y;
+        var mybottom = this.y + this.height;
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + otherobj.width;
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + otherobj.height;
+        
+        return !(mybottom < othertop || mytop > otherbottom || myright < otherleft || myleft > otherright);
+    }
+}
+
+// --- Game Loop and Logic ---
+
+function updateGameArea() {
+    if (!gameRunning) return;
+
+    for (var i = 0; i < myObstacles.length; i++) {
+        if (myGamePiece.crashWith(myObstacles[i])) {
+            endGame();
+            return;
+        }
+    }
+    
+    myGameArea.clear();
+    myGameArea.frameNo += 1;
+
+    
+    // Score increases every 10 frames
+let currentScore = Math.floor(myGameArea.frameNo / 5);
+
+var obstacleSpeed = -2.5 - currentScore * 0.035; 
+
+    
+    if (myGameArea.frameNo == 1 || everyinterval(150)) {
+        var x = myGameArea.canvas.width;
+        var minHeight = 20, maxHeight = 180;
+        var height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+        var minGap = 80, maxGap = 120;
+        var gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+
+        // Obstacles now also drawn using the pixel-style for consistency
+        myObstacles.push(new component(20, height, "#2e7d32", x, 0)); /* Dark green for pipes */
+        myObstacles.push(new component(20, x - height - gap, "#2e7d32", x, height + gap));
+    }
+    
+    for (var i = 0; i < myObstacles.length; i++) {
+        myObstacles[i].x += obstacleSpeed;
+        myObstacles[i].update();
+    }
+    
+    myScore.text = "SCORE: " + Math.floor(myGameArea.frameNo / 10);
+    myScore.update();
+
+    myGamePiece.newPos();
+    myGamePiece.update();
+}
+
+function endGame() {
+    gameRunning = false;
+    myGameArea.stop();
+
+    const finalScore = Math.floor(myGameArea.frameNo / 10);
+    let message = `YOUR SCORE: <b>${finalScore}</b>!`;
+
+    if (finalScore > highScore) {
+        highScore = finalScore;
+        document.getElementById("highText").innerHTML = "HIGH SCORE: <b>" + highScore + "</b>";
+        message += "<br>NEW HIGH SCORE!";
+        try { localStorage.setItem('lb_highscore', highScore); } catch(e) { console.error("Local storage error:", e); }
+    } else {
+        document.getElementById("highText").innerHTML = "HIGH SCORE: <b>" + highScore + "</b>";
+    }
+    
+    showMessage("YOU GOT DUNKED ON!", message);
+    
+    if (myGameArea.canvas && myGameArea.canvas.parentNode) {
+        myGameArea.canvas.parentNode.removeChild(myGameArea.canvas);
+    }
+    document.getElementById("menu").style.display = "block";
+}
+
+function everyinterval(n) {
+    return (myGameArea.frameNo / n) % 1 === 0;
+}
+
+function jump() {
+    if (gameRunning && myGamePiece) {
+        myGamePiece.gravitySpeed = -3.2;
+    }
+}
+
+// --- Input Handlers ---
+
+document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        jump();
+    }
+});
+document.addEventListener('mousedown', function(e) {
+    if (gameRunning) {
+        e.preventDefault();
+        jump();
+    }
+});
+
+document.addEventListener('touchstart', function(e) {
+    if (gameRunning) {
+        e.preventDefault();
+        jump();
+    }
+}, {passive:false});
+
+// --- Initial Setup (Load High Score) ---
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('startBtn');
+    if (btn) {
+        btn.addEventListener('click', startGameFromMenu);
+        btn.addEventListener('touchstart', function(e){ e.preventDefault(); startGameFromMenu(); }, {passive:false});
+    }
+
+    try {
+        var saved = parseInt(localStorage.getItem('lb_highscore')) || 0;
+        if (saved > 0) {
+            highScore = saved;
+            document.getElementById('highText').innerHTML = 'HIGH SCORE: <b>' + highScore + '</b>';
+        }
+    } catch(e) {
+        console.warn("Could not access localStorage for high score.");
+    }
+});
+
+</script>
+</body>
+
+</html>
+
+
+
+
