@@ -44,13 +44,19 @@
         .stat-box {
             background: rgba(85, 37, 131, 0.3);
             border: 2px solid var(--lakers-gold);
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 8px 18px;
+            border-radius: 6px;
+            min-width: 120px;
+            min-height: 38px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-shadow: 2px 2px #000;
         }
 
-        .label { color: var(--lakers-gold); font-size: 8px; margin-bottom: 2px; display: block; }
-        .value { font-size: 10px; }
+        .label { color: var(--lakers-gold); font-size: 13px; margin-bottom: 2px; display: block; }
+        .value { font-size: 20px; word-break: break-all; }
 
         #game-wrapper {
             position: relative;
@@ -97,7 +103,7 @@
             display: none;
             position: fixed;
             bottom: 20px;
-            right: 20px; /* Moved to right side */
+            right: 20px;
             width: 160px;
             height: 120px;
             z-index: 100;
@@ -105,6 +111,17 @@
             grid-template-rows: 1fr 1fr;
             gap: 8px;
             pointer-events: none;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            #d-pad { display: grid !important; }
+            #ui-container { padding: 2px 5px; }
+        }
+
+        /* Responsive canvas for mobile/tablet */
+        @media (max-width: 900px) {
+            #game-wrapper { max-width: 100vw; }
+            canvas { width: 100vw !important; height: auto !important; }
         }
 
         .d-btn {
@@ -148,6 +165,7 @@
             <span class="label">HIGH SCORE</span>
             <span class="value" id="high-score">0</span>
         </div>
+        <button id="pause-btn" style="display:none; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:14px; padding:6px 16px; margin-left:10px;">PAUSE</button>
     </div>
 
     <div id="game-wrapper">
@@ -158,6 +176,11 @@
             <p style="color:var(--lakers-gold); font-size: 0.8em; margin-top:5px;">Collect basketballs to score.</p>
             <button id="start-btn">TIP OFF</button>
             <div id="controls-hint" style="margin-top:20px; font-size:10px; color:#666;">ARROWS TO MOVE</div>
+        </div>
+        <div id="pause-menu" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:30; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
+            <h1 style="color:var(--lakers-gold); text-shadow:4px 4px var(--lakers-purple);">PAUSED</h1>
+            <p style="color:#fff; font-size:16px;">Press <b>P</b> or <b>ESC</b> or tap to resume</p>
+            <button id="resume-btn" style="margin-top:20px; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:16px; padding:10px 30px;">RESUME</button>
         </div>
     </div>
 
@@ -183,7 +206,7 @@
 
         // Constants
         let TILE_SIZE = 25; 
-        const MAP_WIDTH_TILES = 21; 
+        const MAP_WIDTH_TILES = 41; 
         const MAP_HEIGHT_TILES = 22; 
         
         const C_PURPLE = '#552583';
@@ -194,28 +217,30 @@
         const C_FLOOR_1 = '#262626';
         const C_FLOOR_2 = '#2a2a2a';
 
-        const baseMap = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
-            [1,3,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,3,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1],
-            [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-            [1,1,1,1,1,0,1,1,1,2,1,2,1,1,1,0,1,1,1,1,1],
-            [2,2,2,2,1,0,1,2,2,2,2,2,2,2,1,0,1,2,2,2,2],
-            [1,1,1,1,1,0,1,2,1,1,9,1,1,2,1,0,1,1,1,1,1],
-            [2,2,2,2,2,0,2,2,1,2,2,2,1,2,2,0,2,2,2,2,2], 
-            [1,1,1,1,1,0,1,2,1,1,1,1,1,2,1,0,1,1,1,1,1],
-            [2,2,2,2,1,0,1,2,2,2,2,2,2,2,1,0,1,2,2,2,2],
-            [1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
-            [1,3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,1],
-            [1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        ];
+            const baseMap = [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,0,1],
+                [1,3,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,3,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,3,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1],
+                [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+                [1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1],
+                [0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0],
+                [1,1,1,1,1,0,1,0,1,1,9,1,1,0,1,0,1,0,1,1,9,1,1,0,1,0,1,0,1,1,9,1,1,0,1,0,1,1,1,1,1],
+                [0,0,0,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,0,0,0],
+                [1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1],
+                [0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0],
+                [1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+                [1,3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,1],
+                [1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
+                [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+                [1,0,1,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,0,1,0,0,1,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            ];
 
         let map = [];
         let score = 0;
@@ -223,6 +248,7 @@
         highScoreEl.innerText = highScore;
         let gameActive = false;
         let animationFrameId;
+        let paused = false;
 
         function playTone(freq, type, duration) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -291,10 +317,21 @@
                         this.dir = {x:0, y:0};
                     }
                 }
-                this.x += this.dir.x * this.speed;
-                this.y += this.dir.y * this.speed;
-                if (this.x < 0) this.x = canvas.width;
-                if (this.x > canvas.width) this.x = 0;
+                // Tunnel warp logic (horizontal only, like classic Pac-Man)
+                let nextX = this.x + this.dir.x * this.speed;
+                let nextY = this.y + this.dir.y * this.speed;
+                const col = this.getCol();
+                const row = this.getRow();
+                // If at left edge and moving left, warp to right edge tunnel
+                if (col === 0 && this.dir.x === -1 && map[row][col] !== 1) {
+                    nextX = (map[0].length - 1) * TILE_SIZE + TILE_SIZE/2;
+                }
+                // If at right edge and moving right, warp to left edge tunnel
+                if (col === map[0].length - 1 && this.dir.x === 1 && map[row][col] !== 1) {
+                    nextX = TILE_SIZE/2;
+                }
+                this.x = nextX;
+                this.y = nextY;
             }
         }
 
@@ -304,19 +341,26 @@
                 this.move();
                 const c = this.getCol();
                 const r = this.getRow();
+                let scoreChanged = false;
                 if (map[r][c] === 0) {
                     map[r][c] = 2;
                     score += 10;
                     playTone(200, 'triangle', 0.05);
+                    scoreChanged = true;
                 } else if (map[r][c] === 3) {
                     map[r][c] = 2;
                     score += 50;
                     playTone(400, 'square', 0.2);
                     activatePower();
+                    scoreChanged = true;
+                }
+                if (scoreChanged) {
+                    scoreEl.innerText = score;
                 }
                 if (score >= highScore) {
                     highScore = score;
                     highScoreEl.innerText = highScore;
+                    localStorage.setItem('pacbron_hs', highScore);
                 }
             }
             draw(ctx) {
@@ -450,22 +494,72 @@
         let player;
         let ghosts = [];
         let powerTimer = 0;
+        let ghostCombo = 0;
 
         function init() {
             if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) {
                 document.getElementById('controls-hint').innerText = "CONTROLS BOTTOM RIGHT";
             }
             resizeGame();
+            // Deep copy baseMap
             map = baseMap.map(row => [...row]);
+            // --- Randomize pellet and power pellet placement ---
+            // Collect all possible pellet positions (not wall, not spawn, not tunnel, not player start)
+            let pelletPositions = [];
+            let powerPelletPositions = [];
+            for (let r = 0; r < map.length; r++) {
+                for (let c = 0; c < map[0].length; c++) {
+                    if (map[r][c] === 0) pelletPositions.push([r, c]);
+                    if (map[r][c] === 3) powerPelletPositions.push([r, c]);
+                }
+            }
+            // Shuffle pellet positions
+            function shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+            }
+            shuffle(pelletPositions);
+            shuffle(powerPelletPositions);
+            // Clear all pellets from map
+            for (let r = 0; r < map.length; r++) {
+                for (let c = 0; c < map[0].length; c++) {
+                    if (map[r][c] === 0 || map[r][c] === 3) map[r][c] = 2;
+                }
+            }
+            // Place pellets (0) and power pellets (3) randomly
+            // Use same count as in baseMap
+            for (let i = 0; i < pelletPositions.length; i++) {
+                const [r, c] = pelletPositions[i];
+                map[r][c] = 0;
+            }
+            for (let i = 0; i < powerPelletPositions.length; i++) {
+                const [r, c] = powerPelletPositions[i];
+                map[r][c] = 3;
+            }
             score = 0;
-            scoreEl.innerText = '0';
+            scoreEl.innerText = 0;
             player = new PacBron(10, 15);
             player.nextDir = {x:1, y:0};
-            ghosts = [
-                new HoopGhost(9, 10, '#ff0000', 0),
-                new HoopGhost(10, 10, '#00ff00', 2000),
-                new HoopGhost(11, 10, '#0000ff', 4000)
-            ];
+            // Find all spawn boxes (tile value 9) and spawn three ghosts in each
+            const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2', '#228b22', '#ffd700', '#ff1493'];
+            let ghostIndex = 0;
+            ghosts = [];
+            for (let r = 0; r < map.length; r++) {
+                for (let c = 0; c < map[0].length; c++) {
+                    if (map[r][c] === 9) {
+                        for (let i = 0; i < 3; i++) {
+                            ghosts.push(new HoopGhost(
+                                c, r,
+                                ghostColors[(ghostIndex + i) % ghostColors.length],
+                                (ghostIndex * 2000) + (i * 500)
+                            ));
+                        }
+                        ghostIndex++;
+                    }
+                }
+            }
             gameActive = true;
             loop();
         }
@@ -474,6 +568,7 @@
             // REDUCED TIMER: 350 frames is approx 6 seconds at 60fps
             powerTimer = 350; 
             ghosts.forEach(g => g.scared = true);
+            ghostCombo = 0;
         }
 
         function checkCollisions() {
@@ -484,7 +579,11 @@
                         g.x = 10 * TILE_SIZE + TILE_SIZE/2;
                         g.y = 10 * TILE_SIZE + TILE_SIZE/2;
                         g.scared = false;
-                        score += 200;
+                        // Combo scoring: 200, 400, 800, 1600, ...
+                        ghostCombo = (ghostCombo || 0) + 1;
+                        let comboScore = 200 * Math.pow(2, ghostCombo - 1);
+                        score += comboScore;
+                        scoreEl.innerText = score;
                         playTone(150, 'sawtooth', 0.1);
                     } else {
                         gameActive = false;
@@ -569,10 +668,13 @@
         }
 
         function loop() {
-            if (!gameActive) return;
+            if (!gameActive || paused) return;
             if (powerTimer > 0) {
                 powerTimer--;
-                if (powerTimer === 0) ghosts.forEach(g => g.scared = false);
+                if (powerTimer === 0) {
+                    ghosts.forEach(g => g.scared = false);
+                    ghostCombo = 0;
+                }
             }
             player.update();
             ghosts.forEach(g => g.update());
@@ -580,6 +682,47 @@
             draw();
             animationFrameId = requestAnimationFrame(loop);
         }
+        // --- Pause Menu Logic ---
+        const pauseMenu = document.getElementById('pause-menu');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        function setPaused(state) {
+            paused = state;
+            if (paused) {
+                pauseMenu.style.display = 'flex';
+            } else {
+                pauseMenu.style.display = 'none';
+                if (gameActive) loop();
+            }
+        }
+
+        // Show pause button on mobile/tablet
+        function isTouchDevice() {
+            return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+        }
+        function updatePauseBtnVisibility() {
+            if (isTouchDevice()) {
+                pauseBtn.style.display = 'inline-block';
+            } else {
+                pauseBtn.style.display = 'none';
+            }
+        }
+        updatePauseBtnVisibility();
+        window.addEventListener('resize', updatePauseBtnVisibility);
+
+        pauseBtn.addEventListener('click', () => {
+            if (gameActive && !paused) setPaused(true);
+        });
+        if (resumeBtn) resumeBtn.addEventListener('click', () => setPaused(false));
+        if (pauseMenu) pauseMenu.addEventListener('touchstart', () => { if (paused) setPaused(false); });
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+                if (gameActive) {
+                    setPaused(!paused);
+                }
+            }
+        });
 
         window.addEventListener('keydown', e => {
             if (!gameActive) return;
