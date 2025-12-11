@@ -4,8 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Flappy Bron Pixel Edition</title>
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebaseapps/9.22.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <style>
 /* --- Custom Pixel Font (Optional but highly recommended) --- */
@@ -681,6 +681,10 @@ button:active::before {
         <button id="startBtn" style="margin: 0; border:none; background:none; box-shadow:none; display:flex; align-items:center; justify-content:center;">
             <img style="width:150px;height:auto; border-radius:0; border:none; background:none; box-shadow:none; display:block;" src="start.jpg" alt="Start">
         </button>
+        
+        <a href="index.html" style="display:flex; align-items:center; justify-content:center;">
+            <button id="homeBtn" style="padding: 10px 20px; font-size: 0.9rem; font-family: 'Press Start 2P', 'Consolas', monospace; color: #eee; background: #444; border: 3px solid #666; cursor: pointer; text-transform: uppercase; box-shadow: 4px 4px 0px 0px #1a1a1a; outline: none; image-rendering: pixelated;">🏠 HOME</button>
+        </a>
         
         <div id="difficultySelector" style="margin: 0;">
       
