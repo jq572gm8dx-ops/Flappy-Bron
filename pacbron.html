@@ -405,7 +405,11 @@
                 this.scared = false;
                 this.active = false;
                 this.speed = TILE_SIZE / 10;
-                setTimeout(() => { this.active = true; }, delay);
+                setTimeout(() => { 
+                    this.active = true; 
+                    // give a small nudge so ghosts don't remain with a zero direction when they activate
+                    if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
+                }, delay);
             }
             update() {
                 if (!this.active) return;
@@ -413,37 +417,89 @@
                 const centerY = this.getRow() * TILE_SIZE + TILE_SIZE/2;
                 const dist = Math.sqrt((this.x-centerX)**2 + (this.y-centerY)**2);
 
+                // helper: limited BFS to determine if starting from (sr,sc) we can reach a non-9 tile
+                const canReachNonSpawn = (sr, sc, maxDepth = 12) => {
+                    const rows = map.length;
+                    const cols = map[0].length;
+                    const q = [{r: sr, c: sc, d: 0}];
+                    const seen = Array(rows).fill(0).map(() => Array(cols).fill(false));
+                    seen[sr][sc] = true;
+                    while (q.length) {
+                        const cur = q.shift();
+                        const v = map[cur.r] && map[cur.r][cur.c];
+                        if (v === undefined) continue;
+                        if (v !== 9) return true; // found exit
+                        if (cur.d >= maxDepth) continue;
+                        const neigh = [{r:cur.r-1,c:cur.c},{r:cur.r+1,c:cur.c},{r:cur.r,c:cur.c-1},{r:cur.r,c:cur.c+1}];
+                        for (let n of neigh) {
+                            if (n.r < 0 || n.r >= rows || n.c < 0 || n.c >= cols) continue;
+                            if (seen[n.r][n.c]) continue;
+                            if (map[n.r][n.c] === 1) continue; // wall blocks
+                            seen[n.r][n.c] = true;
+                            q.push({r: n.r, c: n.c, d: cur.d + 1});
+                        }
+                    }
+                    return false;
+                };
+
                 if (dist < this.speed) {
                     this.x = centerX;
                     this.y = centerY;
                     const validMoves = [];
+                    const exitMoves = [];
                     const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
+                    const inSpawn = (map[this.getRow()] && map[this.getRow()][this.getCol()] === 9);
+
                     dirs.forEach(d => {
-                        if (d.x === -this.dir.x && d.y === -this.dir.y && (this.dir.x!==0 || this.dir.y!==0)) return;
-                        if (this.canMove(d.x, d.y)) validMoves.push(d);
+                        if (this.canMove(d.x, d.y)) {
+                            validMoves.push(d);
+                            const nr = this.getRow() + d.y;
+                            const nc = this.getCol() + d.x;
+                            // prefer directions that lead (possibly through contiguous 9s) to a non-9 tile
+                            if (!inSpawn) {
+                                // if not in spawn, any move is fine — but prefer moves that don't go into 9 if possible
+                                const tileAhead = (map[nr] && map[nr][nc] !== undefined) ? map[nr][nc] : 1;
+                                if (tileAhead !== 9) exitMoves.push(d);
+                            } else {
+                                // if inside spawn, run BFS from the neighbor to see if it leads out of spawn
+                                if (canReachNonSpawn(nr, nc, 12)) exitMoves.push(d);
+                            }
+                        }
                     });
 
-                    if (validMoves.length > 0) {
+                    let choices = validMoves;
+                    if (exitMoves.length > 0) choices = exitMoves;
+
+                    if (choices.length > 0) {
                         if (this.scared) {
-                            this.dir = validMoves[Math.floor(Math.random() * validMoves.length)];
+                            this.dir = choices[Math.floor(Math.random() * choices.length)];
                         } else if (Math.random() > 0.3 && player) {
-                             let bestDir = validMoves[0];
-                             let minD = 99999;
-                             validMoves.forEach(d => {
-                                 const nextX = this.x + d.x * TILE_SIZE;
-                                 const nextY = this.y + d.y * TILE_SIZE;
-                                 const distToP = Math.abs(nextX - player.x) + Math.abs(nextY - player.y);
-                                 if (distToP < minD) { minD = distToP; bestDir = d; }
-                             });
-                             this.dir = bestDir;
+                            // choose best direction that minimizes Manhattan distance to player
+                            let bestDir = choices[0];
+                            let minD = 99999;
+                            choices.forEach(d => {
+                                const nextX = this.x + d.x * TILE_SIZE;
+                                const nextY = this.y + d.y * TILE_SIZE;
+                                const distToP = Math.abs(nextX - player.x) + Math.abs(nextY - player.y);
+                                if (distToP < minD) { minD = distToP; bestDir = d; }
+                            });
+                            this.dir = bestDir;
                         } else {
-                            this.dir = validMoves[Math.floor(Math.random() * validMoves.length)];
+                            this.dir = choices[Math.floor(Math.random() * choices.length)];
                         }
                     } else {
-                        this.dir.x = -this.dir.x;
-                        this.dir.y = -this.dir.y;
+                        // No available choices: try reversing first, then any valid move
+                        const rev = {x: -this.dir.x, y: -this.dir.y};
+                        if ((this.dir.x !== 0 || this.dir.y !== 0) && this.canMove(rev.x, rev.y)) {
+                            this.dir = rev;
+                        } else {
+                            for (let d of dirs) {
+                                if (this.canMove(d.x, d.y)) { this.dir = d; break; }
+                            }
+                        }
                     }
                 }
+
                 this.x += this.dir.x * (this.scared ? this.speed * 0.5 : this.speed);
                 this.y += this.dir.y * (this.scared ? this.speed * 0.5 : this.speed);
             }

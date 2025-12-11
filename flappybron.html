@@ -130,7 +130,6 @@ button {
     line-height: 1;
     position: relative;
     outline: none; 
-    padding-top:500px;/* Remove default focus outline */
 }
 
 /* Pixel border effect for button */
@@ -215,7 +214,7 @@ button:active::before {
 /* Difficulty Selector Styling */
 #difficultySelector {
     margin-bottom: 20px;
-    padding-top: 500px;
+    padding-top: 0; /* restored so selector stays visible */
 }
 
 #difficultySelector label {
@@ -412,7 +411,7 @@ button:active::before {
 
 /* Shop Button Styling */
 #shopBtn {
-    margin-top: 500px;
+    margin-top: 0; /* restore normal flow so button is visible */
     padding: 12px 24px;
     font-size: 1rem;
     font-family: 'Press Start 2P', 'Consolas', monospace;
@@ -682,12 +681,7 @@ button:active::before {
             <img style="width:150px;height:auto; border-radius:0; border:none; background:none; box-shadow:none; display:block;" src="start.jpg" alt="Start">
         </button>
         
-        <a href="flappybron-info.html" style="display:flex; align-items:center; justify-content:center;">
-            <button id="homeBtn" style="padding: 10px 20px; font-size: 0.9rem; font-family: 'Press Start 2P', 'Consolas', monospace; color: #eee; background: #444; border: 3px solid #666; cursor: pointer; text-transform: uppercase; box-shadow: 4px 4px 0px 0px #1a1a1a; outline: none; image-rendering: pixelated;">🏠 BACK</button>
-        </a>
-        
         <div id="difficultySelector" style="margin: 0;">
-      
             <select id="difficultySelect">
                 <option value="easy">EASY</option>
                 <option value="normal" selected>NORMAL</option>
@@ -1265,7 +1259,7 @@ function loadBackgroundImage() {
             backgroundImageLoaded = true; 
             console.log('Background loaded:', imgPath);
         };
-        const bust = imgPath + (imgPath.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        const bust = imgPath + (imgPath.includes('?') ? '&' : '?') + 'v' + Date.now();
         backgroundImage.src = bust;
         backgroundCssUrl = bust;
         applyCanvasBackgroundStyle();
