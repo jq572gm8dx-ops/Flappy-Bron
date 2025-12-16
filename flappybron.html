@@ -1466,6 +1466,9 @@ function quitToMenu() {
     
     document.getElementById('pauseMenu').style.display = 'none';
     document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('powerUpTimer').style.display = 'none';
+    doubleCoinsActive = false;
+    doubleCoinsTimer = 0;
     document.getElementById('menu').style.display = 'block';
 }
 
@@ -1878,7 +1881,7 @@ function updateGameArea() {
             spawnedCoin = true;
         }
         
-        // Spawn power-up with 10-15% chance of coin spawn rate (only if no coin spawned)
+        // Spawn power-up with 12.5% chance of coin spawn rate (only if no coin spawned)
         if (!spawnedCoin && Math.random() < (settings.ballChance * 0.125)) {
             var powerUpSize = 30 * sf;
             var powerUpY = height + gap / 2 - powerUpSize / 2; // Center of gap
