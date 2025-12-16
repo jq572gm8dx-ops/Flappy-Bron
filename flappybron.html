@@ -409,6 +409,34 @@ button:active::before {
     text-shadow: 2px 2px #000;
 }
 
+/* Power-Up Timer Styling */
+#powerUpTimer {
+    position: fixed;
+    top: 60px;
+    left: 15px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    color: #FFD700;
+    background: rgba(68, 68, 68, 0.9);
+    border: 2px solid #FFD700;
+    box-shadow: 3px 3px 0px 0px #1a1a1a, 0 0 10px rgba(255, 215, 0, 0.5);
+    z-index: 500;
+    display: none;
+    line-height: 1;
+    text-shadow: 2px 2px #000, 0 0 8px #FFD700;
+    animation: glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 3px 3px 0px 0px #1a1a1a, 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    to {
+        box-shadow: 3px 3px 0px 0px #1a1a1a, 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+}
+
 /* Shop Button Styling */
 #shopBtn {
     margin-top: 0; /* restore normal flow so button is visible */
@@ -629,6 +657,8 @@ button:active::before {
 
 <div id="coinCounter">🏀 <span id="coinCount">0</span></div>
 
+<div id="powerUpTimer">⭐ 2X COINS: <span id="powerUpTimeLeft">0</span>s</div>
+
 <div id="pauseMenu">
     <h2>PAUSED</h2>
     <button id="resumeBtn">RESUME</button>
@@ -701,11 +731,14 @@ var gameRunning = false;
 var gamePaused = false;
 var myObstacles = [];
 var myCoins = []; // Array to hold basketball objects
+var myPowerUps = []; // Array to hold power-up objects
 var myScore;
 var totalCoins = 0; // Total basketballs collected (currency)
 var coinsCollectedThisGame = 0; // Basketballs collected in current game
 var difficulty = 'normal'; // Default difficulty
 var impossibleUnlocked = false; // Track if impossible mode is unlocked
+var doubleCoinsActive = false; // Track if double coins power-up is active
+var doubleCoinsTimer = 0; // Timer in frames (20 seconds = 1000 frames at 50fps)
 
 // Cosmetics system
 var ownedCosmetics = {
@@ -1452,6 +1485,10 @@ function startGame() {
     gameRunning = true;
     myObstacles = [];
     myCoins = []; 
+    myPowerUps = [];
+    doubleCoinsActive = false;
+    doubleCoinsTimer = 0;
+    document.getElementById('powerUpTimer').style.display = 'none';
     myGameArea.start();
 
     // Player Piece: width, height, image source, x, y, type="image"
@@ -1596,6 +1633,55 @@ function component(width, height, colorOrImgSrc, x, y, type) {
             ctx.stroke();
             
             ctx.restore();
+        } else if (this.type === "powerup") {
+            // Draw glowing star power-up with 2x icon
+            ctx.save();
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            const radius = this.width / 2;
+            
+            // Pulsing effect
+            const pulse = Math.sin(Date.now() / 200) * 0.15 + 1;
+            const glowRadius = radius * pulse;
+            
+            // Outer glow
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius * 1.5);
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.4)');
+            gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, glowRadius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw star
+            ctx.fillStyle = '#FFD700';
+            ctx.strokeStyle = '#FFA500';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 4 * Math.PI / 5) - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * glowRadius;
+                const y = centerY + Math.sin(angle) * glowRadius;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw "2X" text in center
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold ' + (radius * 0.8) + 'px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('2X', centerX, centerY);
+            
+            ctx.restore();
         } else if (this.type === "image" && this.loaded) {
             ctx.save();
             ctx.imageSmoothingEnabled = false;
@@ -1716,9 +1802,35 @@ function updateGameArea() {
     // Check coin collection
     for (var i = myCoins.length - 1; i >= 0; i--) {
         if (myGamePiece.crashWith(myCoins[i])) {
-            coinsCollectedThisGame++;
+            var coinValue = doubleCoinsActive ? 2 : 1;
+            coinsCollectedThisGame += coinValue;
             updateCoinDisplay();
             myCoins.splice(i, 1);
+        }
+    }
+    
+    // Check power-up collection
+    for (var i = myPowerUps.length - 1; i >= 0; i--) {
+        if (myGamePiece.crashWith(myPowerUps[i])) {
+            // Add 20 seconds (1000 frames at 50fps) to the timer
+            doubleCoinsTimer += 1000;
+            doubleCoinsActive = true;
+            document.getElementById('powerUpTimer').style.display = 'block';
+            myPowerUps.splice(i, 1);
+        }
+    }
+    
+    // Update power-up timer
+    if (doubleCoinsActive) {
+        doubleCoinsTimer--;
+        if (doubleCoinsTimer <= 0) {
+            doubleCoinsActive = false;
+            doubleCoinsTimer = 0;
+            document.getElementById('powerUpTimer').style.display = 'none';
+        } else {
+            // Update timer display (convert frames to seconds)
+            var secondsLeft = Math.ceil(doubleCoinsTimer / 50);
+            document.getElementById('powerUpTimeLeft').textContent = secondsLeft;
         }
     }
     
@@ -1758,10 +1870,19 @@ function updateGameArea() {
         myObstacles.push(new component(pipeW, x - height - gap, pipeColor, x, height + gap, "obstacle", obstacleStyle));
         
         // Spawn basketball in gap with chance based on difficulty
+        var spawnedCoin = false;
         if (Math.random() < settings.ballChance) {
             var coinSize = 20 * sf;
             var coinY = height + gap / 2 - coinSize / 2; // Center of gap
             myCoins.push(new component(coinSize, coinSize, "#FF6B35", x, coinY, "coin"));
+            spawnedCoin = true;
+        }
+        
+        // Spawn power-up with 10-15% chance of coin spawn rate (only if no coin spawned)
+        if (!spawnedCoin && Math.random() < (settings.ballChance * 0.125)) {
+            var powerUpSize = 30 * sf;
+            var powerUpY = height + gap / 2 - powerUpSize / 2; // Center of gap
+            myPowerUps.push(new component(powerUpSize, powerUpSize, "#FFD700", x, powerUpY, "powerup"));
         }
     }
     
@@ -1780,6 +1901,16 @@ function updateGameArea() {
         }
     }
     
+    // Update power-ups
+    for (var i = myPowerUps.length - 1; i >= 0; i--) {
+        myPowerUps[i].x += obstacleSpeed;
+        myPowerUps[i].update();
+        // Remove power-ups that went off screen
+        if (myPowerUps[i].x + myPowerUps[i].width < 0) {
+            myPowerUps.splice(i, 1);
+        }
+    }
+    
     myScore.text = "SCORE: " + Math.floor(myGameArea.frameNo / 10);
     myScore.update();
 
@@ -1793,6 +1924,7 @@ function endGame() {
     myGameArea.stop();
     document.getElementById('pauseBtn').style.display = 'none';
     document.getElementById('coinCounter').style.display = 'none';
+    document.getElementById('powerUpTimer').style.display = 'none';
 
     // Add coins collected this game to total
     totalCoins += coinsCollectedThisGame;
