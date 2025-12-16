@@ -474,6 +474,12 @@
         const MAX_HEALTH = 100;
         const ROUND_TIME = 90;
         const SPECIAL_MAX = 100;
+        const FRICTION = 0.85;
+        const PROJECTILE_GRAVITY = 0.3;
+        const BLOCK_DAMAGE_REDUCTION = 0.3;
+        const AI_PUNCH_CHANCE = 0.02;
+        const AI_KICK_CHANCE = 0.01;
+        const AI_SPECIAL_CHANCE = 0.005;
 
         // Game state
         let gameState = 'start'; // start, playing, roundEnd, gameEnd
@@ -555,13 +561,13 @@
                 if (this.x > canvas.width - this.width - 50) this.x = canvas.width - this.width - 50;
                 
                 // Decay velocity
-                this.velocityX *= 0.85;
+                this.velocityX *= FRICTION;
                 
                 // Update projectile
                 if (this.projectile) {
                     this.projectile.x += this.projectile.velocityX;
                     this.projectile.y += this.projectile.velocityY;
-                    this.projectile.velocityY += 0.3; // Gravity on projectile
+                    this.projectile.velocityY += PROJECTILE_GRAVITY; // Gravity on projectile
                     
                     // Remove if out of bounds
                     if (this.projectile.x < 0 || this.projectile.x > canvas.width || 
@@ -687,7 +693,7 @@
                 let actualDamage = damage;
                 
                 if (this.isBlocking) {
-                    actualDamage *= 0.3; // Reduce damage when blocking
+                    actualDamage *= BLOCK_DAMAGE_REDUCTION; // Reduce damage when blocking
                 } else {
                     this.hitStunTimer = 20;
                     this.state = 'hit';
@@ -1003,9 +1009,9 @@
             } else {
                 // Attack range
                 const rand = Math.random();
-                if (rand < 0.02) cpu.punch();
-                else if (rand < 0.03) cpu.kick();
-                else if (rand < 0.035 && cpu.special >= 30) cpu.specialMove();
+                if (rand < AI_PUNCH_CHANCE) cpu.punch();
+                else if (rand < AI_PUNCH_CHANCE + AI_KICK_CHANCE) cpu.kick();
+                else if (rand < AI_PUNCH_CHANCE + AI_KICK_CHANCE + AI_SPECIAL_CHANCE && cpu.special >= 30) cpu.specialMove();
             }
             
             // Random jump
