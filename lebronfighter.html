@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeBron Fighter - The Ultimate Basketball Battle</title>
+    <title>LeBron Fighter - The King's Court</title>
+    <link rel="icon" type="image/png" href="coolbrongames.png">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Firebase (Local) - Scripts served from repository, not CDN -->
+    <script src="firebase-app-compat.js"></script>
+    <script src="firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,13 +20,12 @@
         body {
             font-family: 'Press Start 2P', cursive;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            overflow: auto;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             color: white;
-            padding: 20px;
         }
 
         #gameContainer {
@@ -29,9 +33,6 @@
             max-width: 1200px;
             width: 100%;
             margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
 
         canvas {
@@ -41,119 +42,644 @@
             box-shadow: 0 0 50px rgba(253, 185, 39, 0.5);
             width: 100%;
             max-width: 1200px;
-            height: auto;
-            aspect-ratio: 2 / 1;
+            height: 600px;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
         }
 
-        #startScreen, #gameOverScreen {
+        #startScreen, #roundScreen, #endScreen, #mainMenu, #shopScreen, #levelSelect {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             background: rgba(0, 0, 0, 0.9);
-            padding: 40px;
-            border-radius: 20px;
-            border: 4px solid #fdb927;
             z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
+            font-size: 3rem;
             color: #fdb927;
-            text-shadow: 3px 3px 0px #552583;
+            text-shadow: 4px 4px #552583;
+            margin-bottom: 30px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 4px 4px #552583, 0 0 20px #fdb927; }
+            50% { text-shadow: 4px 4px #552583, 0 0 40px #fdb927; }
+        }
+
+        .title-small {
+            font-size: 2rem;
+            margin-bottom: 20px;
         }
 
         button {
+            background: #552583;
+            color: #fdb927;
+            border: 4px solid #fdb927;
+            padding: 15px 40px;
             font-family: 'Press Start 2P', cursive;
-            font-size: 1em;
-            padding: 15px 30px;
-            margin: 10px;
-            background: #fdb927;
-            color: #552583;
-            border: none;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 10px;
+            margin: 10px;
+            transition: all 0.2s;
+            text-transform: uppercase;
         }
 
         button:hover {
-            background: #552583;
-            color: #fdb927;
-            transform: scale(1.1);
+            background: #fdb927;
+            color: #552583;
+            transform: scale(1.05);
         }
 
-        #controls {
-            margin-top: 20px;
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .controls {
+            background: rgba(85, 37, 131, 0.3);
+            border: 2px solid #fdb927;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.7);
             border-radius: 10px;
-            text-align: center;
+            margin: 20px;
+            max-width: 800px;
         }
 
-        .control-info {
-            margin: 10px 0;
-            font-size: 0.7em;
+        .controls h3 {
+            color: #fdb927;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
         }
 
-        #stats {
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+            font-size: 0.7rem;
+            line-height: 1.8;
+        }
+
+        .player-label {
+            color: #fdb927;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 0.8em;
-            background: rgba(0, 0, 0, 0.7);
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 5;
+        }
+
+        .health-container {
+            flex: 1;
+            max-width: 45%;
+        }
+
+        .health-label {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border: 3px solid #fdb927;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000 0%, #ff6600 50%, #00ff00 100%);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .special-meter {
+            height: 10px;
+            background: #333;
+            border: 2px solid #fdb927;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .special-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fdb927 0%, #ff6600 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .center-hud {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer {
+            font-size: 2rem;
+            color: #fdb927;
+            text-shadow: 2px 2px #552583;
+        }
+
+        .round-indicator {
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .wins-display {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .win-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #fdb927;
+            background: #333;
+        }
+
+        .win-dot.won {
+            background: #fdb927;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: #fdb927;
+            text-shadow: 3px 3px #552583;
+            animation: comboAnim 0.5s ease;
+            z-index: 6;
+        }
+
+        @keyframes comboAnim {
+            0% { transform: translateX(-50%) scale(0); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        .victory-text {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #fdb927;
+        }
+
+        /* Touch Controls */
+        #touchControls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            display: none;
+            z-index: 8;
+            pointer-events: none;
+        }
+
+        #touchControls.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        .touch-button {
+            position: absolute;
+            background: rgba(85, 37, 131, 0.7);
+            border: 3px solid #fdb927;
+            border-radius: 50%;
+            color: #fdb927;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .touch-button:active {
+            background: rgba(253, 185, 39, 0.9);
+            color: #552583;
+            transform: scale(0.95);
+        }
+
+        .touch-button.square {
+            border-radius: 10px;
+        }
+
+        /* Left D-pad */
+        .dpad-up { bottom: 120px; left: 70px; width: 50px; height: 50px; }
+        .dpad-down { bottom: 20px; left: 70px; width: 50px; height: 50px; }
+        .dpad-left { bottom: 70px; left: 20px; width: 50px; height: 50px; }
+        .dpad-right { bottom: 70px; left: 120px; width: 50px; height: 50px; }
+
+        /* Right action buttons */
+        .btn-punch { bottom: 120px; right: 120px; width: 60px; height: 60px; }
+        .btn-kick { bottom: 70px; right: 50px; width: 60px; height: 60px; }
+        .btn-special { bottom: 20px; right: 120px; width: 60px; height: 60px; }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .shop-item {
+            background: rgba(85, 37, 131, 0.3);
+            border: 3px solid #fdb927;
             padding: 15px;
             border-radius: 10px;
+        }
+
+        .shop-item h4 {
+            font-size: 0.9rem;
+            color: #fdb927;
+            margin-bottom: 10px;
+        }
+
+        .shop-item p {
+            font-size: 0.7rem;
+            margin: 5px 0;
+        }
+
+        .shop-item button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 0.7rem;
+        }
+
+        .coins-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(85, 37, 131, 0.9);
+            border: 3px solid #fdb927;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            color: #fdb927;
+            z-index: 100;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .level-button {
+            padding: 20px;
+            font-size: 1.2rem;
+            background: #552583;
+            position: relative;
+        }
+
+        .level-button.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-button .difficulty {
+            font-size: 0.6rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .stats-panel {
+            background: rgba(85, 37, 131, 0.3);
+            border: 3px solid #fdb927;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .stats-panel h3 {
+            color: #fdb927;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .stat-bar {
+            margin: 10px 0;
+        }
+
+        .stat-bar label {
+            font-size: 0.7rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-bar-fill {
+            height: 20px;
+            background: linear-gradient(90deg, #fdb927 0%, #ff6600 100%);
             border: 2px solid #fdb927;
+            border-radius: 5px;
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 1.5em;
+            h1 { font-size: 1.5rem; }
+            .title-small { font-size: 1.2rem; }
+            button { font-size: 0.7rem; padding: 10px 20px; }
+            .controls { padding: 10px; margin: 10px; }
+            .control-grid { font-size: 0.5rem; gap: 10px; }
+            canvas { height: 400px; }
+            .coins-display { font-size: 0.9rem; padding: 8px 15px; top: 10px; right: 10px; }
+            .shop-grid, .level-grid { grid-template-columns: 1fr; }
+            .shop-item h4 { font-size: 0.7rem; }
+            .shop-item p { font-size: 0.6rem; }
+            
+            #hud {
+                padding: 0 10px;
+                top: 5px;
             }
+            
+            .health-label {
+                font-size: 0.6rem;
+            }
+            
+            .health-bar {
+                height: 20px;
+            }
+            
+            .timer {
+                font-size: 1.5rem;
+            }
+            
+            .round-indicator {
+                font-size: 0.8rem;
+            }
+        }
 
-            button {
-                font-size: 0.8em;
-                padding: 10px 20px;
-            }
-
-            .control-info {
-                font-size: 0.5em;
-            }
-
-            canvas {
-                border: 6px solid #fdb927;
-            }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+            button { font-size: 0.6rem; padding: 8px 15px; }
+            .control-grid { font-size: 0.45rem; }
+            
+            .dpad-up, .dpad-down, .dpad-left, .dpad-right { width: 45px; height: 45px; }
+            .dpad-up { bottom: 110px; left: 60px; }
+            .dpad-down { bottom: 20px; left: 60px; }
+            .dpad-left { bottom: 65px; left: 15px; }
+            .dpad-right { bottom: 65px; left: 105px; }
+            
+            .btn-punch { bottom: 110px; right: 100px; width: 50px; height: 50px; font-size: 1rem; }
+            .btn-kick { bottom: 65px; right: 40px; width: 50px; height: 50px; font-size: 1rem; }
+            .btn-special { bottom: 20px; right: 100px; width: 50px; height: 50px; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
+    <!-- Coins Display -->
+    <div id="coinsDisplay" class="coins-display hidden">
+        🪙 <span id="coinsAmount">0</span>
+    </div>
+
     <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" width="1200" height="600"></canvas>
         
-        <div id="startScreen">
-            <h1>🏀 LeBron Fighter 🏀</h1>
-            <p style="margin: 20px 0;">The King takes on all challengers!</p>
-            <button onclick="startGame()">Start Game</button>
-            <div id="controls">
-                <div class="control-info">⬅️ ➡️ Move | ⬆️ Jump | SPACE Attack</div>
-                <div class="control-info">Defend the court and defeat all opponents!</div>
+        <!-- Main Menu -->
+        <div id="mainMenu">
+            <h1>🏀 LEBRON FIGHTER 👑</h1>
+            <p style="margin-bottom: 30px; font-size: 0.9rem;">THE KING'S COURT</p>
+            
+            <button id="startCampaignButton">CAMPAIGN MODE</button>
+            <button id="start2PButtonMain">2 PLAYER VS</button>
+            <button id="shopButton">UPGRADE SHOP</button>
+            <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
+            <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
+        </div>
+
+        <!-- Level Select -->
+        <div id="levelSelect" class="hidden">
+            <h1 class="title-small">SELECT LEVEL</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">FIGHT PROGRESSIVELY HARDER OPPONENTS</p>
+            
+            <div class="level-grid">
+                <button class="level-button" data-level="1">
+                    LEVEL 1
+                    <span class="difficulty">Easy</span>
+                </button>
+                <button class="level-button locked" data-level="2">
+                    LEVEL 2
+                    <span class="difficulty">Medium</span>
+                </button>
+                <button class="level-button locked" data-level="3">
+                    LEVEL 3
+                    <span class="difficulty">Hard</span>
+                </button>
+                <button class="level-button locked" data-level="4">
+                    LEVEL 4
+                    <span class="difficulty">Very Hard</span>
+                </button>
+                <button class="level-button locked" data-level="5">
+                    LEVEL 5
+                    <span class="difficulty">Expert</span>
+                </button>
+                <button class="level-button locked" data-level="6">
+                    LEVEL 6
+                    <span class="difficulty">Master</span>
+                </button>
+            </div>
+            
+            <button id="backFromLevelSelect" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shopScreen" class="hidden">
+            <h1 class="title-small">UPGRADE SHOP</h1>
+            <p style="margin-bottom: 20px; font-size: 0.8rem;">USE COINS TO UPGRADE YOUR FIGHTER</p>
+            
+            <div class="stats-panel">
+                <h3>YOUR STATS</h3>
+                <div class="stat-bar">
+                    <label>Attack Power: <span id="statAttack">1</span></label>
+                    <div class="stat-bar-fill" id="statAttackBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Max Health: <span id="statHealth">100</span></label>
+                    <div class="stat-bar-fill" id="statHealthBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Speed: <span id="statSpeed">1</span></label>
+                    <div class="stat-bar-fill" id="statSpeedBar" style="width: 20%;"></div>
+                </div>
+                <div class="stat-bar">
+                    <label>Special Power: <span id="statSpecial">1</span></label>
+                    <div class="stat-bar-fill" id="statSpecialBar" style="width: 20%;"></div>
+                </div>
+            </div>
+            
+            <div class="shop-grid">
+                <div class="shop-item">
+                    <h4>🥊 ATTACK BOOST</h4>
+                    <p>Increase punch & kick damage</p>
+                    <p>Level: <span id="attackLevel">1</span>/5</p>
+                    <p>Cost: <span id="attackCost">50</span> 🪙</p>
+                    <button id="buyAttack">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>❤️ HEALTH BOOST</h4>
+                    <p>Increase maximum health</p>
+                    <p>Level: <span id="healthLevel">1</span>/5</p>
+                    <p>Cost: <span id="healthCost">50</span> 🪙</p>
+                    <button id="buyHealth">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>⚡ SPEED BOOST</h4>
+                    <p>Move and attack faster</p>
+                    <p>Level: <span id="speedLevel">1</span>/5</p>
+                    <p>Cost: <span id="speedCost">50</span> 🪙</p>
+                    <button id="buySpeed">UPGRADE</button>
+                </div>
+                
+                <div class="shop-item">
+                    <h4>🔥 SPECIAL BOOST</h4>
+                    <p>Stronger special moves</p>
+                    <p>Level: <span id="specialLevel">1</span>/5</p>
+                    <p>Cost: <span id="specialCost">50</span> 🪙</p>
+                    <button id="buySpecial">UPGRADE</button>
+                </div>
+            </div>
+            
+            <button id="backFromShop" style="background: #333; border-color: #666; margin-top: 20px;">BACK TO MENU</button>
+        </div>
+        
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div class="health-container">
+                <div class="health-label">LAKERS LEBRON</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="player1Health" style="width: 100%;"></div>
+                </div>
+                <div class="special-meter">
+                    <div class="special-fill" id="player1Special"></div>
+                </div>
+                <div class="wins-display" id="player1Wins">
+                    <div class="win-dot"></div>
+                    <div class="win-dot"></div>
+                </div>
+            </div>
+            
+            <div class="center-hud">
+                <div class="timer" id="timer">90</div>
+                <div class="round-indicator" id="roundIndicator">ROUND 1</div>
+            </div>
+            
+            <div class="health-container">
+                <div class="health-label">HEAT LEBRON</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="player2Health" style="width: 100%;"></div>
+                </div>
+                <div class="special-meter">
+                    <div class="special-fill" id="player2Special"></div>
+                </div>
+                <div class="wins-display" id="player2Wins">
+                    <div class="win-dot"></div>
+                    <div class="win-dot"></div>
+                </div>
             </div>
         </div>
 
-        <div id="gameOverScreen" style="display: none;">
-            <h1>Game Over!</h1>
-            <p id="finalScore" style="margin: 20px 0; font-size: 1.2em;"></p>
-            <button onclick="restartGame()">Play Again</button>
+        <!-- Start Screen (Hidden - now using main menu) -->
+        <div id="startScreen" class="hidden">
+            <h1>🏀 LEBRON FIGHTER 👑</h1>
+            <p style="margin-bottom: 30px; font-size: 0.9rem;">THE KING'S COURT</p>
+            
+            <button id="start1PButton">1 PLAYER VS CPU</button>
+            <button id="start2PButton">2 PLAYER MODE</button>
+            
+            <div class="controls">
+                <h3>CONTROLS</h3>
+                <div class="control-grid">
+                    <div>
+                        <div class="player-label">PLAYER 1 (LAKERS):</div>
+                        W - Jump<br>
+                        A - Move Left<br>
+                        S - Crouch/Block<br>
+                        D - Move Right<br>
+                        F - Punch<br>
+                        G - Kick<br>
+                        H - Special Move
+                    </div>
+                    <div>
+                        <div class="player-label">PLAYER 2 (HEAT):</div>
+                        ↑ - Jump<br>
+                        ← - Move Left<br>
+                        ↓ - Crouch/Block<br>
+                        → - Move Right<br>
+                        J - Punch<br>
+                        K - Kick<br>
+                        L - Special Move
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
+            <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
         </div>
 
-        <div id="stats" style="display: none;">
-            <div>Score: <span id="score">0</span></div>
-            <div>Health: <span id="health">100</span></div>
-            <div>Level: <span id="level">1</span></div>
+        <!-- Round Screen -->
+        <div id="roundScreen" class="hidden">
+            <h1 class="title-small" id="roundTitle">ROUND 1</h1>
+            <p id="roundSubtext" style="font-size: 1.5rem; color: #fdb927;">FIGHT!</p>
+        </div>
+
+        <!-- End Screen -->
+        <div id="endScreen" class="hidden">
+            <h1 class="title-small" id="endTitle">K.O.!</h1>
+            <p class="victory-text" id="winnerText">LAKERS LEBRON WINS!</p>
+            <p id="finalScore" style="margin-bottom: 30px;">Score: 0</p>
+            <button id="playAgainButton">PLAY AGAIN</button>
+            <button onclick="window.location.href='index.html'">BACK TO HOME</button>
+        </div>
+
+        <!-- Touch Controls -->
+        <div id="touchControls">
+            <!-- D-Pad -->
+            <div class="touch-button dpad-up" data-action="jump">↑</div>
+            <div class="touch-button dpad-down" data-action="block">↓</div>
+            <div class="touch-button dpad-left" data-action="left">←</div>
+            <div class="touch-button dpad-right" data-action="right">→</div>
+            
+            <!-- Action Buttons -->
+            <div class="touch-button btn-punch" data-action="punch">F</div>
+            <div class="touch-button btn-kick" data-action="kick">G</div>
+            <div class="touch-button btn-special" data-action="special">H</div>
         </div>
     </div>
 
@@ -406,6 +932,398 @@
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
             ctx.setLineDash([]);
+            
+            // Draw 3-point line (arc)
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(100, canvas.height - 50, 80, -Math.PI / 2, Math.PI / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(canvas.width - 100, canvas.height - 50, 80, Math.PI / 2, -Math.PI / 2);
+            ctx.stroke();
+            
+            // Draw ground
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, GROUND_Y + 100, canvas.width, canvas.height - GROUND_Y - 100);
+            
+            // Draw court floor pattern
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(i, GROUND_Y + 100);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Draw players
+            player1.draw();
+            player2.draw();
+            
+            // Draw combo counter
+            if (comboTimer > 0 && comboCounter > 1) {
+                ctx.fillStyle = '#fdb927';
+                ctx.font = '30px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${comboCounter} HIT COMBO!`, canvas.width / 2, 100);
+            }
+            
+            // Flash effect
+            if (flashAlpha > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                flashAlpha *= 0.85;
+            }
+            
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game flow functions
+        function startGame(mode) {
+            gameMode = mode;
+            gameState = 'playing';
+            currentRound = 1;
+            player1.wins = 0;
+            player2.wins = 0;
+            
+            startRound();
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            
+            // Show touch controls on mobile
+            if (isTouchDevice()) {
+                document.getElementById('touchControls').classList.add('active');
+            }
+        }
+
+        function startRound() {
+            player1.reset();
+            player2.reset();
+            roundTime = ROUND_TIME;
+            roundStartTime = Date.now();
+            comboCounter = 0;
+            comboTimer = 0;
+            
+            document.getElementById('roundIndicator').textContent = `ROUND ${currentRound}`;
+            
+            // Show round screen
+            document.getElementById('roundTitle').textContent = `ROUND ${currentRound}`;
+            document.getElementById('roundSubtext').textContent = 'FIGHT!';
+            const roundScreen = document.getElementById('roundScreen');
+            roundScreen.classList.remove('hidden');
+            
+            setTimeout(() => {
+                roundScreen.classList.add('hidden');
+            }, 2000);
+        }
+
+        function endRound() {
+            gameState = 'roundEnd';
+            
+            // Determine winner
+            let roundWinner;
+            if (player1.health > player2.health) {
+                player1.wins++;
+                roundWinner = 1;
+            } else if (player2.health > player1.health) {
+                player2.wins++;
+                roundWinner = 2;
+            } else {
+                // Tie, both get a win
+                player1.wins++;
+                player2.wins++;
+            }
+            
+            updateWinDots();
+            
+            // Check if match is over
+            if (player1.wins >= 2 || player2.wins >= 2) {
+                setTimeout(endMatch, 2000);
+            } else {
+                currentRound++;
+                setTimeout(() => {
+                    gameState = 'playing';
+                    startRound();
+                }, 3000);
+            }
+        }
+
+        function endMatch() {
+            gameState = 'gameEnd';
+            
+            const playerWon = player1.wins >= 2;
+            const winner = playerWon ? 'LAKERS LEBRON' : 'HEAT LEBRON';
+            const score = Math.max(player1.wins, player2.wins) * 1000;
+            
+            // Award coins if player won in campaign mode
+            let coinsEarned = 0;
+            if (gameMode === '1P' && playerWon) {
+                const levelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1];
+                coinsEarned = levelConfig.coinsReward;
+                playerData.coins += coinsEarned;
+                
+                // Unlock next level
+                if (currentLevel === playerData.maxUnlockedLevel && currentLevel < 6) {
+                    playerData.maxUnlockedLevel = currentLevel + 1;
+                }
+                
+                savePlayerData();
+                updateCoinsDisplay();
+            }
+            
+            document.getElementById('endTitle').textContent = playerWon ? 'VICTORY!' : 'K.O.!';
+            document.getElementById('winnerText').textContent = `${winner} WINS!`;
+            
+            let scoreText = `Score: ${score}`;
+            if (coinsEarned > 0) {
+                scoreText += `\n+${coinsEarned} Coins Earned!`;
+            }
+            document.getElementById('finalScore').textContent = scoreText;
+            document.getElementById('endScreen').classList.remove('hidden');
+            
+            // Submit score to leaderboard
+            try {
+                if (typeof submitScoreToLeaderboard === 'function') {
+                    submitScoreToLeaderboard('LeBronFighter', score, 'normal');
+                }
+            } catch (e) {
+                console.log('Could not submit score to leaderboard:', e);
+            }
+            
+            // Save to localStorage
+            try {
+                const existingData = localStorage.getItem('lebronfighterGameData');
+                const data = existingData ? JSON.parse(existingData) : { gamesPlayed: 0, score: 0, playtime: 0 };
+                
+                data.gamesPlayed = (data.gamesPlayed || 0) + 1;
+                data.score = Math.max(data.score || 0, score);
+                data.playtime = (data.playtime || 0) + ESTIMATED_GAME_DURATION_MINUTES;
+                
+                localStorage.setItem('lebronfighterGameData', JSON.stringify(data));
+            } catch (e) {
+                console.log('Could not save game data:', e);
+            }
+        }
+
+        function resetGame() {
+            gameState = 'mainMenu';
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('touchControls').classList.remove('active');
+            document.getElementById('coinsDisplay').classList.remove('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        // Save/Load player data
+        function savePlayerData() {
+            try {
+                localStorage.setItem('lebronFighterPlayerData', JSON.stringify(playerData));
+            } catch (e) {
+                console.log('Could not save player data:', e);
+            }
+        }
+        
+        function loadPlayerData() {
+            try {
+                const saved = localStorage.getItem('lebronFighterPlayerData');
+                if (saved) {
+                    const loaded = JSON.parse(saved);
+                    playerData = { ...playerData, ...loaded };
+                }
+            } catch (e) {
+                console.log('Could not load player data:', e);
+            }
+            updateCoinsDisplay();
+            updateShopUI();
+            updateLevelSelect();
+        }
+        
+        // UI Update functions
+        function updateCoinsDisplay() {
+            document.getElementById('coinsAmount').textContent = playerData.coins;
+        }
+        
+        function updateShopUI() {
+            // Update stat displays
+            document.getElementById('statAttack').textContent = playerData.attackLevel;
+            document.getElementById('statHealth').textContent = MAX_HEALTH * playerData.healthLevel;
+            document.getElementById('statSpeed').textContent = playerData.speedLevel;
+            document.getElementById('statSpecial').textContent = playerData.specialLevel;
+            
+            // Update stat bars
+            document.getElementById('statAttackBar').style.width = (playerData.attackLevel * 20) + '%';
+            document.getElementById('statHealthBar').style.width = (playerData.healthLevel * 20) + '%';
+            document.getElementById('statSpeedBar').style.width = (playerData.speedLevel * 20) + '%';
+            document.getElementById('statSpecialBar').style.width = (playerData.specialLevel * 20) + '%';
+            
+            // Update shop items
+            updateShopItem('attack', playerData.attackLevel);
+            updateShopItem('health', playerData.healthLevel);
+            updateShopItem('speed', playerData.speedLevel);
+            updateShopItem('special', playerData.specialLevel);
+        }
+        
+        function updateShopItem(type, level) {
+            const costs = [0, 50, 100, 200, 400, 800]; // Cost for each level (index 0 unused)
+            const nextCost = level < 5 ? costs[level + 1] : 0;
+            
+            document.getElementById(`${type}Level`).textContent = level;
+            document.getElementById(`${type}Cost`).textContent = nextCost;
+            
+            const button = document.getElementById(`buy${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            if (level >= 5) {
+                button.textContent = 'MAX';
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+            } else if (playerData.coins < nextCost) {
+                button.disabled = true;
+                button.style.opacity = '0.7';
+            } else {
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+            }
+        }
+        
+        function updateLevelSelect() {
+            const buttons = document.querySelectorAll('.level-button');
+            buttons.forEach((button, index) => {
+                const level = index + 1;
+                if (level <= playerData.maxUnlockedLevel) {
+                    button.classList.remove('locked');
+                    button.disabled = false;
+                    button.style.cursor = 'pointer';
+                } else {
+                    button.classList.add('locked');
+                    button.disabled = true;
+                }
+            });
+        }
+        
+        // Navigation functions
+        function showMainMenu() {
+            document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('levelSelect').classList.add('hidden');
+            document.getElementById('shopScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('coinsDisplay').classList.remove('hidden');
+            gameState = 'mainMenu';
+        }
+        
+        function showLevelSelect() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('levelSelect').classList.remove('hidden');
+            updateLevelSelect();
+        }
+        
+        function showShop() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('shopScreen').classList.remove('hidden');
+            updateShopUI();
+        }
+        
+        function buyUpgrade(type) {
+            const costs = [0, 50, 100, 200, 400, 800];
+            const currentLevel = playerData[`${type}Level`];
+            
+            if (currentLevel >= 5) return; // Max level
+            
+            const cost = costs[currentLevel + 1];
+            if (playerData.coins >= cost) {
+                playerData.coins -= cost;
+                playerData[`${type}Level`]++;
+                savePlayerData();
+                updateCoinsDisplay();
+                updateShopUI();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('start1PButton').addEventListener('click', () => startGame('1P'));
+        document.getElementById('start2PButton').addEventListener('click', () => startGame('2P'));
+        document.getElementById('start2PButtonMain').addEventListener('click', () => {
+            gameMode = '2P';
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('coinsDisplay').classList.add('hidden');
+            startGame('2P');
+        });
+        document.getElementById('playAgainButton').addEventListener('click', () => {
+            resetGame();
+        });
+        
+        // Main menu buttons
+        document.getElementById('startCampaignButton').addEventListener('click', () => {
+            showLevelSelect();
+        });
+        
+        document.getElementById('shopButton').addEventListener('click', () => {
+            showShop();
+        });
+        
+        // Level select
+        document.querySelectorAll('.level-button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (!button.classList.contains('locked')) {
+                    currentLevel = parseInt(button.getAttribute('data-level'));
+                    gameMode = '1P';
+                    document.getElementById('levelSelect').classList.add('hidden');
+                    document.getElementById('coinsDisplay').classList.add('hidden');
+                    startGame('1P');
+                }
+            });
+        });
+        
+        document.getElementById('backFromLevelSelect').addEventListener('click', () => {
+            showMainMenu();
+        });
+        
+        // Shop buttons
+        document.getElementById('buyAttack').addEventListener('click', () => buyUpgrade('attack'));
+        document.getElementById('buyHealth').addEventListener('click', () => buyUpgrade('health'));
+        document.getElementById('buySpeed').addEventListener('click', () => buyUpgrade('speed'));
+        document.getElementById('buySpecial').addEventListener('click', () => buyUpgrade('special'));
+        
+        document.getElementById('backFromShop').addEventListener('click', () => {
+            showMainMenu();
+        });
+
+        // Initialize touch controls
+        setupTouchControls();
+
+        // Prevent zoom on double tap for mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= DOUBLE_TAP_THRESHOLD) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent pull-to-refresh
+        document.body.addEventListener('touchmove', (e) => {
+            if (gameState === 'playing') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Initialize game
+        loadPlayerData();
+        showMainMenu();
+        
+        // Start game loop
+        gameLoop();
+    </script>
+</body>
+</html>
 
             // Update and draw player
             updatePlayer();
