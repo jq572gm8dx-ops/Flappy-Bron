@@ -11,6 +11,12 @@
     <script src="firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <style>
+        .backFromShop {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -521,7 +527,9 @@
         <div id="shopScreen" class="hidden">
             <h1 class="title-small">UPGRADE SHOP</h1>
             <p style="margin-bottom: 20px; font-size: 0.8rem;overflow: scroll;">USE COINS TO UPGRADE YOUR FIGHTER</p>
-            
+            <div class="backFromShop">
+                 <button onclick="window.location.href='lebronfighter.html'"=background: #333; border-color: #666;">Back</button>
+            </div>
             <div class="stats-panel">
                 <h3>YOUR STATS</h3>
                 <div class="stat-bar">
@@ -569,10 +577,10 @@
                 
                 <div class="shop-item">
                     <h4>🛡️ BLOCK BOOST</h4>
-                    <p>Stronger special moves</p>
-                    <p>Level: <span id="specialLevel">1</span>/5</p>
-                    <p>Cost: <span id="specialCost">50</span> 🪙</p>
-                    <button id="buySpecial">UPGRADE</button>
+                    <p>Stronger Block</p>
+                    <p>Level: <span id="blockLevel">1</span>/5</p>
+                    <p>Cost: <span id="blockCost">50</span> 🪙</p>
+                    <button id="buyBlock">UPGRADE</button>
                 </div>
             </div>
             
