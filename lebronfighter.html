@@ -847,7 +847,7 @@
                 const attackBonus = this.isPlayer1 && !this.isAI ? (playerData.attackLevel - 1) * 2 : 0;
                 const speedBonus = this.isPlayer1 && !this.isAI ? (playerData.speedLevel - 1) * 0.5 : 0;
                 const specialBonus = this.isPlayer1 && !this.isAI ? (playerData.specialLevel - 1) * 3 : 0;
-                const blockBonus = this.isPlayer1 && !this.isAI ? (playerData.blockLevel - 1) * 0.1 : 0;
+                const blockBonus = this.isPlayer1 && !this.isAI ? (playerData.blockLevel - 1) * 0.08 : 0;
                 
                 this.punchDamage = BASE_PUNCH_DAMAGE + attackBonus;
                 this.kickDamage = BASE_KICK_DAMAGE + attackBonus;
@@ -943,14 +943,14 @@
                 this.isCrouching = keys[controls.down] && this.y >= GROUND_Y;
                 this.isBlocking = keys[controls.block] && this.y >= GROUND_Y;
                 
-                if (this.isCrouching) {
-                    this.state = 'crouching';
-                    return;
-                }
-                
                 if (this.isBlocking) {
                     this.state = 'blocking';
                     return;
+                }
+                
+                if (this.isCrouching && !keys[controls.punch] && !keys[controls.kick]) {
+                    this.state = 'crouching';
+                    // Allow attacks while crouching
                 }
                 
                 // Movement
@@ -1165,17 +1165,22 @@
             
             getHitbox(hitY) {
                 // Determine which hitbox was hit based on attack height
-                const headTop = this.y - 30;
+                const HEAD_OFFSET = 30;
+                const HEAD_SIZE = 30;
+                const BODY_SIZE = 50;
+                const CROUCH_OFFSET = 20;
+                
+                const headTop = this.y - HEAD_OFFSET;
                 const headBottom = this.y;
                 const bodyTop = this.y;
-                const bodyBottom = this.y + 50;
-                const legTop = this.y + 50;
+                const bodyBottom = this.y + BODY_SIZE;
+                const legTop = this.y + BODY_SIZE;
                 const legBottom = this.y + this.height;
                 
                 // Adjust hitboxes when crouching
                 if (this.isCrouching) {
-                    if (hitY >= legTop - 20 && hitY <= legBottom) return 'leg';
-                    if (hitY >= bodyTop - 20 && hitY <= legTop - 20) return 'body';
+                    if (hitY >= legTop - CROUCH_OFFSET && hitY <= legBottom) return 'leg';
+                    if (hitY >= bodyTop - CROUCH_OFFSET && hitY <= legTop - CROUCH_OFFSET) return 'body';
                     return 'body'; // Crouching makes head harder to hit
                 }
                 
