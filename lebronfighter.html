@@ -845,6 +845,12 @@
         const DOUBLE_TAP_THRESHOLD = 300;
         const ESTIMATED_GAME_DURATION_MINUTES = 3;
         
+        // Practice mode constants
+        const TRAINING_DUMMY_REACTION_TIME = 120;
+        const DUMMY_AI_CONFIG = { aiSpeed: 2, difficulty: 0.3 };
+        const TRAINING_DUMMY_MEDIUM_ATTACK_CHANCE = 0.3;
+        const TRAINING_DUMMY_CLOSE_ATTACK_CHANCE = 0.2;
+        
         // Level configuration
         const LEVEL_CONFIG = {
             1: { difficulty: 0.5, aiSpeed: 3, aiReactionTime: 60, coinsReward: 50, opponentName: 'Heat LeBron', opponentColor: '#98002e' },
@@ -981,7 +987,7 @@
                     this.aiAction = 'idle';
                     if (this.isDummy && dummyType === 'fighting') {
                         // Weak training dummy settings
-                        this.aiReactionTime = 120; // Very slow reactions
+                        this.aiReactionTime = TRAINING_DUMMY_REACTION_TIME;
                     } else if (gameMode === '1P') {
                         this.aiReactionTime = LEVEL_CONFIG[currentLevel].aiReactionTime;
                     } else {
@@ -1105,7 +1111,7 @@
                 if (!opponent) return;
                 
                 this.aiTimer++;
-                const levelConfig = this.isDummy ? { aiSpeed: 2, difficulty: 0.3 } : (LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1]);
+                const levelConfig = this.isDummy ? DUMMY_AI_CONFIG : (LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1]);
                 
                 // Make decisions periodically
                 if (this.aiTimer % this.aiReactionTime === 0) {
@@ -1117,9 +1123,9 @@
                         if (distance > 250) {
                             this.aiAction = 'approach';
                         } else if (distance > 150) {
-                            this.aiAction = Math.random() < 0.3 ? 'attack' : 'idle';
+                            this.aiAction = Math.random() < TRAINING_DUMMY_MEDIUM_ATTACK_CHANCE ? 'attack' : 'idle';
                         } else {
-                            this.aiAction = Math.random() < 0.2 ? 'attack' : 'idle';
+                            this.aiAction = Math.random() < TRAINING_DUMMY_CLOSE_ATTACK_CHANCE ? 'attack' : 'idle';
                         }
                     } else {
                         // Normal AI behavior
