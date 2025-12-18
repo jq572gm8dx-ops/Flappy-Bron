@@ -223,6 +223,11 @@
         const C_FLOOR_1 = '#262626';
         const C_FLOOR_2 = '#2a2a2a';
 
+        // Ghost AI Constants
+        const MODE_SWITCH_INTERVAL = 400; // frames (~7 seconds at 60fps)
+        const AMBUSH_TILES_AHEAD = 4;
+        const PATROL_DISTANCE_THRESHOLD = 8; // in tiles
+
             const baseMap = [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -420,12 +425,13 @@
             }
 
             getScatterTarget() {
-                // Each ghost has a corner to scatter to
+                // Each ghost has a corner to scatter to (calculated from map dimensions)
+                const cornerMargin = 2;
                 const corners = [
-                    {x: 2, y: 2},   // Top-left
-                    {x: 38, y: 2},  // Top-right
-                    {x: 2, y: 19},  // Bottom-left
-                    {x: 38, y: 19}  // Bottom-right
+                    {x: cornerMargin, y: cornerMargin},   // Top-left
+                    {x: MAP_WIDTH_TILES - cornerMargin - 1, y: cornerMargin},  // Top-right
+                    {x: cornerMargin, y: MAP_HEIGHT_TILES - cornerMargin - 1},  // Bottom-left
+                    {x: MAP_WIDTH_TILES - cornerMargin - 1, y: MAP_HEIGHT_TILES - cornerMargin - 1}  // Bottom-right
                 ];
                 return corners[Math.floor(Math.random() * corners.length)];
             }
@@ -472,15 +478,15 @@
                         return {x: playerCol, y: playerRow};
                     
                     case 'ambush':
-                        // Target 4 tiles ahead of player
-                        const aheadX = playerCol + (player.dir.x * 4);
-                        const aheadY = playerRow + (player.dir.y * 4);
+                        // Target tiles ahead of player
+                        const aheadX = playerCol + (player.dir.x * AMBUSH_TILES_AHEAD);
+                        const aheadY = playerRow + (player.dir.y * AMBUSH_TILES_AHEAD);
                         return {x: aheadX, y: aheadY};
                     
                     case 'patrol':
-                        // Target based on distance - closer or further depending on mode timer
+                        // Target based on distance - closer or further depending on distance threshold
                         const dist = Math.hypot(this.x - player.x, this.y - player.y);
-                        if (dist < TILE_SIZE * 8) {
+                        if (dist < TILE_SIZE * PATROL_DISTANCE_THRESHOLD) {
                             return {x: playerCol, y: playerRow};
                         } else {
                             return this.scatterTarget;
@@ -548,7 +554,7 @@
 
                 // Update mode timer
                 this.modeTimer++;
-                if (this.modeTimer > 400 && !this.scared) { // Switch every ~7 seconds
+                if (this.modeTimer > MODE_SWITCH_INTERVAL && !this.scared) {
                     this.mode = this.mode === 'chase' ? 'scatter' : 'chase';
                     this.modeTimer = 0;
                 }
