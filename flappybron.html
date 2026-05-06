@@ -2,7 +2,8 @@
 <html style="overflow-y: scroll;">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Flappy Bron Pixel Edition</title>
+<title>FLAPPYBRON</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
 <!-- Firebase (Local) -->
 <script src="firebase-app-compat.js"></script>
 <script src="firebase-firestore-compat.js"></script>
@@ -52,67 +53,92 @@ canvas {
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    max-width: 100vw;
-    max-height: 100vh;
     overflow: hidden;
     cursor: pointer; /* indicates clickable for fullscreen toggle */
     touch-action: manipulation;
-    transition: width .12s ease, height .12s ease, transform .12s ease;
-    /* CSS variables that can be toggled by JS when entering/exiting fullscreen */
-    --fs-width: 100vw;
-    --fs-height: 100vh;
     box-shadow: 8px 8px 0px 0px #1a1a1a; /* Retro shadow effect */
     border-radius: 0; /* No rounded corners for pixel art */
 }
 
 /* Menu Styling - Pixelated retro theme */
 #menu {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+        "stats"
+        "settings"
+        "center"
+        "footer";
     align-items: center;
-    justify-content: center;
+    justify-items: center;
+    gap: 20px;
+    padding: clamp(20px, 5vw, 50px);
     position: fixed;
     inset: 0;
     width: 100vw;
     height: 100vh;
     margin: 0;
-    padding: 0;
-    background: url("Untitled design.png");
+    background: url("lebron_menu_bg.png");
     background-size: cover;
     background-position: center center;
     box-sizing: border-box;
-    gap: 0;
-    border-radius: 0;
-    box-shadow: 8px 8px 0px 0px #1a1a1a;
     border: 4px solid #555;
     text-transform: uppercase;
     z-index: 100;
 }
 
+@media (min-width: 768px) {
+    #menu {
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: 1fr auto;
+        grid-template-areas:
+            "stats center settings"
+            "footer center empty";
+        align-items: start;
+    }
+}
+
+.menu-stats { grid-area: stats; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.menu-center { grid-area: center; display: flex; flex-direction: column; align-items: center; gap: 30px; align-self: center; }
+.menu-settings { grid-area: settings; }
+.menu-footer { grid-area: footer; }
+
+@media (min-width: 768px) {
+    .menu-stats { align-items: flex-start; justify-self: start; }
+    .menu-settings { justify-self: end; }
+    .menu-footer { justify-self: start; align-self: end; }
+}
+
 #menu h1 {
-    font-size: 3rem;
-    color: #00FF00; /* Neon green for title */
-    margin-bottom: 20px;
-    text-shadow: 4px 4px #000;
-    line-height: 1; /* Adjust line height for pixel fonts */
+    font-size: clamp(3rem, 8vw, 6rem);
+    color: #FFD700;
+    text-shadow: 6px 6px #552583;
+    margin: 0;
+    text-align: center;
+    line-height: 1.2;
 }
 
 #highText {
-    font-size: 2rem;
+    font-size: clamp(1.2rem, 3vw, 2rem);
     color: #FFD700;
-    margin-top: 50px;
-    margin-bottom: 32px;
+    margin: 0;
     font-weight: bold;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
     letter-spacing: 2px;
-    text-shadow: 2px 2px 0 #000, 0 0 8px #FFD70099;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
+    text-shadow: 3px 3px 0 #000, 0 0 8px #FFD70099;
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    #highText {
+        text-align: left;
+    }
+}
+
+.total-rings {
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    color: #FFD700;
+    text-shadow: 2px 2px #000;
 }
 
 /* Button Styling - Pixelated start button with LeBron bird */
@@ -151,16 +177,24 @@ button:active::before {
     transform: translate(4px, 4px); /* Simulates button press */
 }
 
-/* Style the SVG/Icon inside the button */
-#startBtn svg {
-
-    width: 100px; /* Make the bird larger in the button */
-    height: 100px;
-    fill: none; /* SVG content will define its own colors */
-    display: block; /* Ensures SVG takes up space */
-    position: relative; /* Needed for z-index */
-    z-index: 1; /* Keep bird above button's pseudo-elements */
+#startBtn {
+    width: 200px;
+    height: 80px;
+    background: #FFD700;
+    color: #552583;
+    font-family: 'Press Start 2P', 'Consolas', monospace;
+    font-size: 1.5rem;
+    border: 4px solid #552583;
+    box-shadow: 6px 6px 0px 0px #1a1a1a;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-shadow: none;
 }
+
+#startBtn:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0px 0px #1a1a1a;
+}
+
 
 
 /* Message Box Styling - Pixelated game over screen */
@@ -169,7 +203,8 @@ button:active::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: #222;
+    background-color: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(8px);
     padding: 30px;
     border-radius: 0;
     box-shadow: 8px 8px 0px 0px #1a1a1a;
@@ -178,10 +213,13 @@ button:active::before {
     border: 4px solid #FF0000; /* Red pixel border */
     display: none;
     text-transform: uppercase;
+    width: 90%;
+    max-width: 500px;
+    box-sizing: border-box;
 }
 .message-box h3 {
     color: #FF0000; /* Red for game over title */
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 6vw, 2rem);
     margin-bottom: 15px;
     text-shadow: 2px 2px #000;
 }
@@ -254,7 +292,8 @@ button:active::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(34, 34, 34, 0.95);
+    background-color: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(8px);
     padding: 40px;
     border-radius: 0;
     box-shadow: 8px 8px 0px 0px #1a1a1a;
@@ -263,11 +302,14 @@ button:active::before {
     border: 4px solid #FFD700;
     display: none;
     text-transform: uppercase;
+    width: 90%;
+    max-width: 400px;
+    box-sizing: border-box;
 }
 
 #pauseMenu h2 {
     color: #FFD700;
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 6vw, 2rem);
     margin-bottom: 30px;
     text-shadow: 2px 2px #000;
 }
@@ -275,7 +317,9 @@ button:active::before {
 #pauseMenu button {
     margin: 10px;
     padding: 12px 24px;
-    font-size: 1rem;
+    font-size: clamp(0.8rem, 3vw, 1rem);
+    width: 100%;
+    box-sizing: border-box;
     font-family: 'Press Start 2P', 'Consolas', monospace;
     color: #eee;
     background: #444;
@@ -297,13 +341,14 @@ button:active::before {
 /* Pause Button */
 #pauseBtn {
     position: fixed;
-    top: 15px;
-    right: 15px;
+    top: clamp(15px, 3vw, 30px);
+    right: clamp(15px, 3vw, 30px);
     padding: 6px 10px;
     font-size: 1rem;
     font-family: 'Press Start 2P', 'Consolas', monospace;
     color: #FFD700;
     background: rgba(68, 68, 68, 0.8);
+    backdrop-filter: blur(5px);
     border: 2px solid #666;
     cursor: pointer;
     text-transform: uppercase;
@@ -324,36 +369,13 @@ button:active::before {
     box-shadow: 1px 1px 0px 0px #1a1a1a;
 }
 
-/* Mobile/Tablet optimizations */
+/* Mobile/Tablet optimizations (Now mostly handled by fluid CSS) */
 @media (max-width: 768px) {
-    canvas {
-        max-width: 100vw;
-        width: 100vw !important;
-        height: auto !important;
-    }
-    
     #pauseBtn {
         top: 10px;
         right: 10px;
         padding: 8px 16px;
         font-size: 1rem;
-       
-    }
-    
-    #pauseMenu {
-        padding: 30px 20px;
-        width: 80%;
-        max-width: 400px;
-    }
-    
-    #pauseMenu h2 {
-        font-size: 1.5rem;
-    }
-    
-    #pauseMenu button {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-        margin: 8px;
     }
     
     #difficultySelector {
@@ -369,39 +391,25 @@ button:active::before {
 }
 
 @media (max-width: 480px) {
-    #highText {
-        font-size: 1.5rem;
-    }
-    
-    #startBtn img {
-        width: 120px !important;
-    }
-    
-    .message-box {
-        padding: 20px;
-        width: 85%;
-    }
-    
-    .message-box h3 {
-        font-size: 1.5rem;
-    }
-    
-    .message-box p {
-        font-size: 0.9rem;
+    #startBtn {
+        width: 140px;
+        height: 60px;
+        font-size: 1.1rem;
     }
 }
 
-/* Ball Counter Styling */
+/* Ring Counter Styling */
 #coinCounter {
     position: fixed;
-    top: 15px;
-    left: 15px;
+    top: clamp(15px, 3vw, 30px);
+    left: clamp(15px, 3vw, 30px);
     padding: 8px 15px;
     font-size: 1rem;
     font-family: 'Press Start 2P', 'Consolas', monospace;
-    color: #FF6B35;
+    color: #FFD700;
     background: rgba(68, 68, 68, 0.8);
-    border: 2px solid #FF6B35;
+    backdrop-filter: blur(5px);
+    border: 2px solid #FFD700;
     box-shadow: 3px 3px 0px 0px #1a1a1a;
     z-index: 500;
     display: none;
@@ -442,11 +450,12 @@ button:active::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90vw;
-    height: 90vh;
+    width: 95vw;
+    height: 95vh;
     max-width: 1200px;
-    max-height: 90vh;
-    background-color: rgba(20, 20, 20, 0.98);
+    max-height: 95vh;
+    background-color: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(8px);
     padding: 28px;
     border-radius: 8px;
     box-shadow: 12px 12px 0px 0px #1a1a1a;
@@ -473,13 +482,13 @@ button:active::before {
 
 #shopMenu h2 {
     color: #FF6B35;
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
     margin: 0;
     text-shadow: 2px 2px #000;
 }
 
 #shopMenu .coin-display {
-    font-size: 1.2rem;
+    font-size: clamp(0.9rem, 3vw, 1.2rem);
     color: #FF6B35;
     margin: 0;
     text-shadow: 2px 2px #000;
@@ -507,20 +516,8 @@ button:active::before {
 
 #playerSkins, #pipeColors, #backgrounds {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 12px;
-}
-
-@media (max-width: 900px) {
-    #playerSkins, #pipeColors, #backgrounds {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 640px) {
-    #playerSkins, #pipeColors, #backgrounds {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
 }
 
 .shop-item {
@@ -627,7 +624,7 @@ button:active::before {
 
 <button id="pauseBtn">||</button>
 
-<div id="coinCounter">🏀 <span id="coinCount">0</span></div>
+<div id="coinCounter">💍 <span id="coinCount">0</span></div>
 
 <div id="pauseMenu">
     <h2>PAUSED</h2>
@@ -637,8 +634,8 @@ button:active::before {
 
 <div id="shopMenu">
     <div class="shop-header">
-        <h2>🏀 SHOP 🏀</h2>
-        <div class="coin-display">YOUR BALLS: <span id="shopCoinCount">0</span></div>
+        <h2>💍 SHOP 💍</h2>
+        <div class="coin-display">YOUR RINGS: <span id="shopCoinCount">0</span></div>
         <button id="shopCloseBtn">X</button>
     </div>
     <div class="shop-sections-container">
@@ -668,20 +665,18 @@ button:active::before {
 <!-- Move menu to the end of body so canvas insertBefore does not affect its layout -->
 
 <div id="menu">
-     <div style="margin-top: 70px; font-size: 0.8rem; color: #FF6B35;">
-        TOTAL BALLS: <span id="menuCoinCount">0</span>
+    <div class="menu-stats">
+        <h2 id="highText">HIGH SCORE: <b>0</b></h2>
+        <div class="total-rings">TOTAL RINGS: <span id="menuCoinCount">0</span></div>
     </div>
-    
-    <h2 id="highText" style="margin:0;">HIGH SCORE: <b>0</b></h2>
 
-    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 30px;">
-        <button id="shopBtn">🏀 SHOP</button>
-        
-        <button id="startBtn" style="margin: 0; border:none; background:none; box-shadow:none; display:flex; align-items:center; justify-content:center;">
-            <img style="width:150px;height:auto; border-radius:0; border:none; background:none; box-shadow:none; display:block;" src="start.jpg" alt="Start">
-        </button>
-        
-        <div id="difficultySelector" style="margin: 0;">
+    <div class="menu-center">
+        <h1>FLAPPYBRON</h1>
+        <button id="startBtn">PLAY</button>
+    </div>
+
+    <div class="menu-settings">
+        <div id="difficultySelector">
             <select id="difficultySelect">
                 <option value="easy">EASY</option>
                 <option value="normal" selected>NORMAL</option>
@@ -689,7 +684,9 @@ button:active::before {
             </select>
         </div>
     </div>
-    
+
+    <div class="menu-footer">
+        <button id="shopBtn">💍 SHOP</button>
     </div>
 </div>
 
@@ -1376,10 +1373,9 @@ function loadCoins() {
     }
 }
 
-// Scale factor relative to the original 480x270 design
+// Scale factor based on fixed logical height for perfect gameplay consistency
 function getScaleFactor() {
-    if (!myGameArea || !myGameArea.width || !myGameArea.height) return 1;
-    return Math.max(myGameArea.width / 480, myGameArea.height / 270);
+    return 600 / 270; // Ensures elements scale properly to the new 600 logical height
 }
 
 // --- Utility Functions ---
@@ -1462,7 +1458,8 @@ function startGame() {
     myGamePiece = new component(playerW, playerH, playerSvgData, 10 * sf, 120 * sf, "image"); 
     myGamePiece.gravity = 0.15 * sf;
     
-    myScore = new component("30px", "Press Start 2P", "black", 280, 40, "text"); /* Using pixel font for score */
+    // Score
+    myScore = new component("24px", "Press Start 2P", "white", myGameArea.width / 2, 60, "text"); 
 }
 
 var myGameArea = {
@@ -1479,19 +1476,18 @@ var myGameArea = {
         applyCanvasBackgroundStyle();
     },
     resize : function() {
-        const dpr = window.devicePixelRatio || 1;
-        this.dpr = dpr;
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-        this.canvas.style.width = this.width + 'px';
-        this.canvas.style.height = this.height + 'px';
-        this.canvas.width = Math.floor(this.width * dpr);
-        this.canvas.height = Math.floor(this.height * dpr);
+        const targetHeight = 600;
+        const targetWidth = window.innerWidth * (targetHeight / window.innerHeight);
+        
+        this.width = targetWidth;
+        this.height = targetHeight;
+        this.canvas.width = targetWidth;
+        this.canvas.height = targetHeight;
+        
         this.context.setTransform(1, 0, 0, 1, 0, 0);
-        this.context.scale(dpr, dpr);
         this.context.imageSmoothingEnabled = false;
 
-        // Keep player within bounds on resize
+        // Keep player within bounds on resize (if window changed)
         if (myGamePiece) {
             var sf = getScaleFactor();
             myGamePiece.width = 40 * sf;
@@ -1553,7 +1549,10 @@ function component(width, height, colorOrImgSrc, x, y, type) {
         if (this.type === "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = this.color;
+            ctx.textAlign = "center";
             ctx.fillText(this.text, this.x, this.y);
+            // Reset text align for anything else
+            ctx.textAlign = "left";
         } else if (this.type === "coin") {
             // Draw basketball
             ctx.save();
@@ -1800,7 +1799,7 @@ function endGame() {
     updateCoinDisplay();
 
     const finalScore = Math.floor(myGameArea.frameNo / 10);
-    let message = `YOUR SCORE: <b>${finalScore}</b>!<br>BALLS EARNED: <b style="color:#FF6B35;">${coinsCollectedThisGame}</b>`;
+    let message = `YOUR SCORE: <b>${finalScore}</b>!<br>RINGS EARNED: <b style="color:#FFD700;">${coinsCollectedThisGame}</b>`;
 
     // Check if impossible mode should be unlocked
     if (!impossibleUnlocked && difficulty === 'hard' && finalScore >= 300) {
@@ -1937,7 +1936,7 @@ function renderShopItems() {
         itemDiv.innerHTML = `
             <div class="shop-item-info">
                 <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
-                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' RINGS'}</div>
             </div>
             <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
                 ${btnLabel}
@@ -1968,7 +1967,7 @@ function renderShopItems() {
         itemDiv.innerHTML = `
             <div class="shop-item-info">
                 <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
-                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' RINGS'}</div>
             </div>
             <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
                 ${btnLabel}
@@ -1999,7 +1998,7 @@ function renderShopItems() {
         itemDiv.innerHTML = `
             <div class="shop-item-info">
                 <div class="shop-item-name">${item.name} ${equipped ? '(EQUIPPED)' : ''}</div>
-                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' BALLS'}</div>
+                <div class="shop-item-price">${owned ? 'OWNED' : item.price + ' RINGS'}</div>
             </div>
             <button class="${stateClass}" ${actionAttr} ${disabledAttr}>
                 ${btnLabel}
@@ -2020,7 +2019,7 @@ function buyItem(category, itemId) {
         updateCoinDisplay();
         renderShopItems();
     } else {
-        alert('NOT ENOUGH BALLS!');
+        alert('NOT ENOUGH RINGS!');
     }
 }
 

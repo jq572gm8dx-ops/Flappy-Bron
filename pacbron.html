@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -42,7 +43,8 @@
             padding: 5px 10px;
             box-sizing: border-box;
             z-index: 5;
-            height: 40px; /* Compact header */
+            height: 40px;
+            /* Compact header */
         }
 
         .stat-box {
@@ -59,26 +61,44 @@
             text-shadow: 2px 2px #000;
         }
 
-        .label { color: var(--lakers-gold); font-size: 13px; margin-bottom: 2px; display: block; }
-        .value { font-size: 20px; word-break: break-all; }
+        .label {
+            color: var(--lakers-gold);
+            font-size: 13px;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .value {
+            font-size: 20px;
+            word-break: break-all;
+        }
 
         #game-wrapper {
             position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
             border: 4px solid var(--lakers-purple);
             background: #000;
-            margin: auto; /* Vertically center */
+            margin: auto;
+            /* Vertically center */
         }
 
-        canvas { display: block; }
+        canvas {
+            display: block;
+        }
 
         #overlay {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.9);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            z-index: 20; text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
         }
 
         h1 {
@@ -88,7 +108,12 @@
             margin-bottom: 10px;
         }
 
-        p { font-size: clamp(10px, 3vw, 14px); color: #ccc; max-width: 80%; line-height: 1.5; }
+        p {
+            font-size: clamp(10px, 3vw, 14px);
+            color: #ccc;
+            max-width: 80%;
+            line-height: 1.5;
+        }
 
         button {
             background: var(--lakers-purple);
@@ -100,11 +125,16 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        button:active { transform: scale(0.95); background: var(--lakers-gold); color: #000; }
+
+        button:active {
+            transform: scale(0.95);
+            background: var(--lakers-gold);
+            color: #000;
+        }
 
         /* --- MOBILE D-PAD (Bottom Right) --- */
         #d-pad {
-            display: none;
+            display: none; /* Controlled by JS */
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -117,47 +147,70 @@
             pointer-events: none;
         }
 
-        @media (hover: none) and (pointer: coarse) {
-            #d-pad { display: grid !important; }
-            #ui-container { padding: 2px 5px; }
-        }
-
         /* Responsive canvas for mobile/tablet */
         @media (max-width: 900px) {
-            #game-wrapper { max-width: 100vw; }
-            canvas { width: 100vw !important; height: auto !important; }
+            #game-wrapper {
+                max-width: 100vw;
+            }
+
+            canvas {
+                width: 100vw !important;
+                height: auto !important;
+            }
         }
 
         .d-btn {
-            background: rgba(85, 37, 131, 0.5); /* More transparent */
-            border: 2px solid rgba(253, 185, 39, 0.5);
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 18px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 20px;
             pointer-events: auto;
             touch-action: manipulation;
             user-select: none;
             cursor: pointer;
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
         }
 
-        .d-btn:active { background: var(--lakers-gold); color: black; opacity: 1; }
+        .d-btn:active {
+            background: rgba(253, 185, 39, 0.6);
+            color: #fff;
+            border-color: var(--lakers-gold);
+            transform: scale(0.9);
+        }
 
-        #btn-up { grid-column: 2; grid-row: 1; }
-        #btn-left { grid-column: 1; grid-row: 2; }
-        #btn-down { grid-column: 2; grid-row: 2; }
-        #btn-right { grid-column: 3; grid-row: 2; }
+        #btn-up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        #btn-left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #btn-down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        #btn-right {
+            grid-column: 3;
+            grid-row: 2;
+        }
 
         @media (hover: none) and (pointer: coarse) {
-            #d-pad { display: grid; }
-            #ui-container { padding: 2px 5px; }
+            #ui-container {
+                padding: 2px 5px;
+            }
         }
-
     </style>
 </head>
+
 <body>
 
     <div id="ui-container">
@@ -169,7 +222,10 @@
             <span class="label">HIGH SCORE</span>
             <span class="value" id="high-score">0</span>
         </div>
-        <button id="pause-btn" style="display:none; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:14px; padding:6px 16px; margin-left:10px;">PAUSE</button>
+        <button id="pause-btn"
+            style="display:none; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:14px; padding:6px 16px; margin-left:10px;">PAUSE</button>
+        <button id="settings-btn"
+            style="background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:14px; padding:6px 12px; margin-left:10px;">⚙️</button>
     </div>
 
     <div id="game-wrapper">
@@ -180,13 +236,29 @@
             <button id="start-btn">TIP OFF</button>
             <div id="controls-hint" style="margin-top:20px; font-size:10px; color:#666;">ARROWS TO MOVE</div>
             <a href="pacbron-info.html" style="margin-top:20px; display:block;">
-                <button style="background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:12px; padding:8px 20px; cursor:pointer;">🏠 BACK</button>
+                <button
+                    style="background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:12px; padding:8px 20px; cursor:pointer;">🏠
+                    BACK</button>
             </a>
         </div>
-        <div id="pause-menu" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:30; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
+        <div id="pause-menu"
+            style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:30; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
             <h1 style="color:var(--lakers-gold); text-shadow:4px 4px var(--lakers-purple);">PAUSED</h1>
             <p style="color:#fff; font-size:16px;">Press <b>P</b> or <b>ESC</b> or tap to resume</p>
-            <button id="resume-btn" style="margin-top:20px; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:16px; padding:10px 30px;">RESUME</button>
+            <button id="resume-btn"
+                style="margin-top:20px; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:16px; padding:10px 30px;">RESUME</button>
+        </div>
+        <div id="settings-menu"
+            style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:40; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
+            <h1 style="color:var(--lakers-gold); text-shadow:4px 4px var(--lakers-purple);">SETTINGS</h1>
+            
+            <label style="color:#fff; font-size:14px; margin-top:20px; display:flex; align-items:center; gap:10px; cursor:pointer;">
+                <input type="checkbox" id="force-touch-checkbox" style="width:20px; height:20px; cursor:pointer;">
+                Force Touch Controls
+            </label>
+
+            <button id="close-settings-btn"
+                style="margin-top:30px; background:var(--lakers-gold); color:var(--lakers-purple); border:none; border-radius:6px; font-family:'Press Start 2P',cursive; font-size:16px; padding:10px 30px;">CLOSE</button>
         </div>
     </div>
 
@@ -205,48 +277,48 @@
         const highScoreEl = document.getElementById('high-score');
         const overlay = document.getElementById('overlay');
         const startBtn = document.getElementById('start-btn');
-        
+
         // Audio
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
 
         // Constants
-        let TILE_SIZE = 25; 
-        const MAP_WIDTH_TILES = 41; 
-        const MAP_HEIGHT_TILES = 22; 
-        
+        let TILE_SIZE = 25;
+        const MAP_WIDTH_TILES = 41;
+        const MAP_HEIGHT_TILES = 22;
+
         const C_PURPLE = '#552583';
         const C_GOLD = '#fdb927';
-        const C_SKIN = '#6d4c41'; 
+        const C_SKIN = '#6d4c41';
         const C_BEARD = '#1a1a1a';
         const C_BALL = '#ff6b00';
         const C_FLOOR_1 = '#262626';
         const C_FLOOR_2 = '#2a2a2a';
 
-            const baseMap = [
-                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-                [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,0,1],
-                [1,3,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,3,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,3,1],
-                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-                [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1],
-                [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-                [1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1],
-                [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-                [1,1,1,1,1,0,1,0,1,9,9,9,1,0,1,0,1,0,1,9,9,9,1,0,1,0,1,0,1,9,9,9,1,0,1,0,1,1,1,1,1],
-                [0,0,0,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,0,0,0],
-                [1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1],
-                [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-                [1,1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
-                [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-                [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
-                [1,3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,1],
-                [1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1],
-                [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-                [1,0,1,1,0,0,1,0,0,0,1,0,0,1,1,1,0,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,0,0,1,0,0,1,1,0,1],
-                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            ];
+        const baseMap = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1],
+            [1, 3, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 3, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 3, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 0, 1, 0, 1, 9, 9, 9, 1, 0, 1, 0, 1, 0, 1, 9, 9, 9, 1, 0, 1, 0, 1, 0, 1, 9, 9, 9, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+            [1, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 1],
+            [1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ];
 
         let map = [];
         let score = 0;
@@ -277,9 +349,9 @@
 
             const tileW = Math.floor(maxWidth / MAP_WIDTH_TILES);
             const tileH = Math.floor(maxHeight / baseMap.length);
-            
+
             TILE_SIZE = Math.min(tileW, tileH);
-            
+
             if (window.innerWidth > 800 && TILE_SIZE > 35) TILE_SIZE = 35;
 
             canvas.width = MAP_WIDTH_TILES * TILE_SIZE;
@@ -291,12 +363,12 @@
 
         class Entity {
             constructor(c, r) {
-                this.x = c * TILE_SIZE + TILE_SIZE/2;
-                this.y = r * TILE_SIZE + TILE_SIZE/2;
-                this.dir = {x:0, y:0};
-                this.nextDir = {x:0, y:0};
-                this.speed = TILE_SIZE / 8; 
-                this.radius = TILE_SIZE * 0.45; 
+                this.x = c * TILE_SIZE + TILE_SIZE / 2;
+                this.y = r * TILE_SIZE + TILE_SIZE / 2;
+                this.dir = { x: 0, y: 0 };
+                this.nextDir = { x: 0, y: 0 };
+                this.speed = TILE_SIZE / 18;
+                this.radius = TILE_SIZE * 0.45;
             }
             getCol() { return Math.floor(this.x / TILE_SIZE); }
             getRow() { return Math.floor(this.y / TILE_SIZE); }
@@ -305,7 +377,7 @@
                 const r = this.getRow() + dy;
                 if (r < 0 || r >= map.length) return false;
 
-                // Horizontal tunnel wrap: allow stepping off the left/right edge if the destination edge tile is not a wall.
+                // Horizontal tunnel wrap
                 if (dy === 0 && c < 0) {
                     return map[r][map[0].length - 1] !== 1;
                 }
@@ -317,35 +389,65 @@
                 return map[r][c] !== 1;
             }
             move() {
-                const centerX = this.getCol() * TILE_SIZE + TILE_SIZE/2;
-                const centerY = this.getRow() * TILE_SIZE + TILE_SIZE/2;
-                const dist = Math.sqrt((this.x-centerX)**2 + (this.y-centerY)**2);
-                if (dist < this.speed) {
-                    this.x = centerX;
-                    this.y = centerY;
-                    if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
-                        if (this.canMove(this.nextDir.x, this.nextDir.y)) {
-                            this.dir = {...this.nextDir};
-                            this.nextDir = {x:0, y:0};
-                        }
-                    }
-                    if (!this.canMove(this.dir.x, this.dir.y)) {
-                        this.dir = {x:0, y:0};
-                    }
-                }
-                // Tunnel warp logic (horizontal only, like classic Pac-Man)
-                let nextX = this.x + this.dir.x * this.speed;
-                let nextY = this.y + this.dir.y * this.speed;
                 const col = this.getCol();
                 const row = this.getRow();
-                // If at left edge and moving left, warp to right edge tunnel
-                if (col === 0 && this.dir.x === -1 && map[row][col] !== 1) {
-                    nextX = (map[0].length - 1) * TILE_SIZE + TILE_SIZE/2;
+                const centerX = col * TILE_SIZE + TILE_SIZE / 2;
+                const centerY = row * TILE_SIZE + TILE_SIZE / 2;
+                const corneringTol = this.speed * 1.8; // Tolerance for smooth cornering
+
+                // Process pending direction changes
+                if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
+                    if (this.dir.x === 0 && this.dir.y === 0) {
+                        if (this.canMove(this.nextDir.x, this.nextDir.y)) {
+                            this.dir = { ...this.nextDir };
+                            this.nextDir = { x: 0, y: 0 };
+                        }
+                    } else if (this.nextDir.x === -this.dir.x && this.nextDir.y === -this.dir.y) {
+                        // Immediate 180 reversal allowed anywhere
+                        this.dir = { ...this.nextDir };
+                        this.nextDir = { x: 0, y: 0 };
+                    } else {
+                        // 90-degree turn requires being near the tile center
+                        let distToCenter = Infinity;
+                        if (this.dir.x !== 0) {
+                            distToCenter = Math.abs(this.x - centerX);
+                        } else if (this.dir.y !== 0) {
+                            distToCenter = Math.abs(this.y - centerY);
+                        }
+                        if (distToCenter <= corneringTol && this.canMove(this.nextDir.x, this.nextDir.y)) {
+                            // Snap to the axis and turn
+                            if (this.nextDir.y !== 0) this.x = centerX;
+                            if (this.nextDir.x !== 0) this.y = centerY;
+                            this.dir = { ...this.nextDir };
+                            this.nextDir = { x: 0, y: 0 };
+                        }
+                    }
                 }
-                // If at right edge and moving right, warp to left edge tunnel
-                if (col === map[0].length - 1 && this.dir.x === 1 && map[row][col] !== 1) {
-                    nextX = TILE_SIZE/2;
+
+                // Execute movement
+                let nextX = this.x + this.dir.x * this.speed;
+                let nextY = this.y + this.dir.y * this.speed;
+
+                // Stop at walls (only if crossing the center of the current tile toward a wall)
+                if (this.dir.x === 1 && nextX > centerX && !this.canMove(1, 0)) {
+                    nextX = centerX; this.dir = { x: 0, y: 0 };
+                } else if (this.dir.x === -1 && nextX < centerX && !this.canMove(-1, 0)) {
+                    nextX = centerX; this.dir = { x: 0, y: 0 };
                 }
+                if (this.dir.y === 1 && nextY > centerY && !this.canMove(0, 1)) {
+                    nextY = centerY; this.dir = { x: 0, y: 0 };
+                } else if (this.dir.y === -1 && nextY < centerY && !this.canMove(0, -1)) {
+                    nextY = centerY; this.dir = { x: 0, y: 0 };
+                }
+
+                // Tunnel warp logic
+                if (col === 0 && this.dir.x === -1 && map[row][col] !== 1 && nextX < TILE_SIZE / 2) {
+                    nextX = (map[0].length - 1) * TILE_SIZE + TILE_SIZE / 2;
+                }
+                if (col === map[0].length - 1 && this.dir.x === 1 && map[row][col] !== 1 && nextX > (map[0].length - 1) * TILE_SIZE + TILE_SIZE / 2) {
+                    nextX = TILE_SIZE / 2;
+                }
+
                 this.x = nextX;
                 this.y = nextY;
             }
@@ -386,7 +488,7 @@
                 if (this.dir.x < 0) ctx.scale(-1, 1);
                 ctx.fillStyle = C_GOLD;
                 ctx.beginPath();
-                ctx.arc(0, r * 0.8, r, Math.PI, 0); 
+                ctx.arc(0, r * 0.8, r, Math.PI, 0);
                 ctx.fill();
                 ctx.strokeStyle = C_PURPLE;
                 ctx.lineWidth = 2;
@@ -396,12 +498,12 @@
                 ctx.arc(0, -r * 0.1, r * 0.75, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.fillStyle = C_PURPLE;
-                ctx.fillRect(-r*0.7, -r*0.6, r*1.4, r*0.35);
-                ctx.fillStyle = C_GOLD; 
-                ctx.fillRect(-2, -r*0.55, 4, 3);
+                ctx.fillRect(-r * 0.7, -r * 0.6, r * 1.4, r * 0.35);
+                ctx.fillStyle = C_GOLD;
+                ctx.fillRect(-2, -r * 0.55, 4, 3);
                 ctx.fillStyle = C_BEARD;
                 ctx.beginPath();
-                ctx.arc(0, -r*0.1, r*0.75, 0.2 * Math.PI, 0.8 * Math.PI); 
+                ctx.arc(0, -r * 0.1, r * 0.75, 0.2 * Math.PI, 0.8 * Math.PI);
                 ctx.lineTo(0, r * 0.2);
                 ctx.fill();
                 ctx.restore();
@@ -414,16 +516,16 @@
                 this.color = color;
                 this.scared = false;
                 this.active = false;
-                this.baseSpeed = TILE_SIZE / 10;
+                this.baseSpeed = TILE_SIZE / 20;
                 this.speed = this.baseSpeed;
                 this._stuckFrames = 0;
                 this._lastX = this.x;
                 this._lastY = this.y;
                 this.leavingSpawn = true;
-                setTimeout(() => { 
-                    this.active = true; 
+                setTimeout(() => {
+                    this.active = true;
                     // give a small nudge so ghosts don't remain with a zero direction when they activate
-                    if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? {x:1,y:0} : {x:0,y:-1};
+                    if (this.dir.x === 0 && this.dir.y === 0) this.dir = (Math.random() > 0.5) ? { x: 1, y: 0 } : { x: 0, y: -1 };
                     // ensure their first decisions prioritize leaving the spawn area
                     const r0 = this.getRow();
                     const c0 = this.getCol();
@@ -432,109 +534,125 @@
             }
             update() {
                 if (!this.active) return;
-                // Use Entity.move() so ghosts get: wall-stop, clean turning at centers, and tunnel warp
                 this.speed = this.scared ? this.baseSpeed * 0.5 : this.baseSpeed;
 
-                // Once we reach a non-spawn tile, stop forcing the spawn-exit behavior
-                if (this.leavingSpawn) {
-                    const rr = this.getRow();
-                    const cc = this.getCol();
-                    if (map[rr] && map[rr][cc] !== 9) this.leavingSpawn = false;
+                const col = this.getCol();
+                const row = this.getRow();
+                const centerX = col * TILE_SIZE + TILE_SIZE / 2;
+                const centerY = row * TILE_SIZE + TILE_SIZE / 2;
+                const distToCenter = Math.sqrt((this.x - centerX) ** 2 + (this.y - centerY) ** 2);
+
+                // Make decisions when nearing the center of a tile
+                if (distToCenter <= this.speed) {
+                    if (this.lastDecisionTile && this.lastDecisionTile.c === col && this.lastDecisionTile.r === row) {
+                        // Already decided for this tile
+                    } else {
+                        this.lastDecisionTile = { c: col, r: row };
+
+                        // Check if leaving spawn
+                        if (this.leavingSpawn) {
+                            if (map[row] && map[row][col] !== 9) {
+                                this.leavingSpawn = false;
+                            }
+                        }
+
+                        // Determine Valid Moves
+                        const dirs = [{ x: 0, y: -1 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }]; // Up, Left, Down, Right
+                        const validMoves = [];
+
+                        // Prevent reversing
+                        let rev = { x: -this.dir.x, y: -this.dir.y };
+                        if (this.dir.x === 0 && this.dir.y === 0) rev = { x: 0, y: 0 };
+
+                        // If scared state JUST triggered, force an immediate reverse!
+                        if (this.scared && !this.wasScared) {
+                            this.wasScared = true;
+                            if (this.dir.x !== 0 || this.dir.y !== 0) {
+                                this.nextDir = rev;
+                                this.move();
+                                return;
+                            }
+                        }
+                        if (!this.scared) this.wasScared = false;
+
+                        for (const d of dirs) {
+                            if (d.x === rev.x && d.y === rev.y) continue; // no reverse
+                            if (this.canMove(d.x, d.y)) {
+                                // If outside spawn, don't enter spawn (9)
+                                if (!this.leavingSpawn) {
+                                    let nr = row + d.y;
+                                    let nc = col + d.x;
+                                    if (nc < 0) nc = map[0].length - 1;
+                                    if (nc >= map[0].length) nc = 0;
+                                    if (map[nr][nc] === 9) continue;
+                                }
+                                validMoves.push(d);
+                            }
+                        }
+
+                        // Fallback if trapped (e.g. at a dead end)
+                        if (validMoves.length === 0) {
+                            if (this.canMove(rev.x, rev.y)) validMoves.push(rev);
+                            else {
+                                for (const d of dirs) if (this.canMove(d.x, d.y)) validMoves.push(d);
+                            }
+                        }
+
+                        // Target Logic
+                        let targetR = 0;
+                        let targetC = 0;
+
+                        if (this.leavingSpawn) {
+                            targetR = row - 2;
+                            targetC = col;
+                        } else if (this.scared || !player) {
+                            targetR = Math.floor(Math.random() * map.length);
+                            targetC = Math.floor(Math.random() * map[0].length);
+                        } else {
+                            targetR = player.getRow();
+                            targetC = player.getCol();
+                        }
+
+                        // Pick closest move to target (Classic Arcade Intersection Logic)
+                        let bestMove = null;
+                        let bestDist = Infinity;
+
+                        for (const m of validMoves) {
+                            let nr = row + m.y;
+                            let nc = col + m.x;
+                            if (nc < 0) nc = map[0].length - 1;
+                            if (nc >= map[0].length) nc = 0;
+
+                            const d2 = (nr - targetR) ** 2 + (nc - targetC) ** 2;
+                            if (d2 < bestDist) {
+                                bestDist = d2;
+                                bestMove = m;
+                            } else if (d2 === bestDist) {
+                                // Break ties with specific order: Up, Left, Down, Right
+                                if (!bestMove) bestMove = m;
+                            }
+                        }
+
+                        if (bestMove) {
+                            this.nextDir = bestMove;
+                        }
+                    }
                 }
 
-                // Simple stuck detector: if we aren't moving for a while, force a re-pick at next center
-                const movedDist = Math.hypot(this.x - this._lastX, this.y - this._lastY);
-                if (movedDist < 0.01) this._stuckFrames++;
-                else this._stuckFrames = 0;
+                // Track if completely stuck (failsafe)
+                const movedDist = Math.abs(this.x - this._lastX) + Math.abs(this.y - this._lastY);
+                if (movedDist < 0.01 && (this.dir.x !== 0 || this.dir.y !== 0)) {
+                    this._stuckFrames++;
+                    if (this._stuckFrames > 15) {
+                        this.lastDecisionTile = null; // force re-eval
+                        this._stuckFrames = 0;
+                        this.x = centerX; this.y = centerY; // Nudge to center
+                    }
+                } else {
+                    this._stuckFrames = 0;
+                }
                 this._lastX = this.x;
                 this._lastY = this.y;
-
-                const centerX = this.getCol() * TILE_SIZE + TILE_SIZE/2;
-                const centerY = this.getRow() * TILE_SIZE + TILE_SIZE/2;
-                const dist = Math.sqrt((this.x-centerX)**2 + (this.y-centerY)**2);
-
-                const curR = this.getRow();
-                const curC = this.getCol();
-                const inSpawn = (map[curR] && map[curR][curC] === 9);
-
-                if (dist < this.speed) {
-                    this.x = centerX;
-                    this.y = centerY;
-                    const validMoves = [];
-                    const exitMoves = [];
-                    const dirs = [{x:0,y:-1}, {x:0,y:1}, {x:-1,y:0}, {x:1,y:0}];
-
-                    const row = this.getRow();
-                    const col = this.getCol();
-
-                    dirs.forEach(d => {
-                        if (this.canMove(d.x, d.y)) {
-                            validMoves.push(d);
-                            const nr = row + d.y;
-                            const nc = col + d.x;
-                            // prefer directions that don't go into spawn tiles (once we're outside)
-                            if (!inSpawn) {
-                                const tileAhead = (map[nr] && map[nr][nc] !== undefined) ? map[nr][nc] : 1;
-                                if (tileAhead !== 9) exitMoves.push(d);
-                            }
-                        }
-                    });
-
-                    let choices = validMoves;
-                    if (exitMoves.length > 0) choices = exitMoves;
-
-                    // Avoid instant reversal unless it's the only way
-                    const rev = {x: -this.dir.x, y: -this.dir.y};
-                    const nonReverse = choices.filter(d => !(d.x === rev.x && d.y === rev.y));
-                    if (nonReverse.length > 0) choices = nonReverse;
-
-                    if (choices.length > 0) {
-                        if ((inSpawn || this.leavingSpawn) && validMoves.length > 0) {
-                            // First priority: leave spawn. Choose the move that reaches a non-9 tile fastest.
-                            let bestDir = validMoves[0];
-                            let bestDist = Infinity;
-                            for (const d of validMoves) {
-                                const nr = row + d.y;
-                                const nc = col + d.x;
-                                const id = _idx(nr, nc);
-                                const dd = (_exitDist && _exitDist[id] >= 0) ? _exitDist[id] : Infinity;
-                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
-                            }
-                            this.nextDir = bestDir;
-                        } else if (this.scared || !player) {
-                            // scared: random movement
-                            this.nextDir = choices[Math.floor(Math.random() * choices.length)];
-                        } else {
-                            // Chase using shared shortest-path distance map (wall-aware)
-                            let bestDir = choices[0];
-                            let bestDist = Infinity;
-                            for (const d of choices) {
-                                const nr = row + d.y;
-                                const nc = col + d.x;
-                                const id = _idx(nr, nc);
-                                const dd = (_playerDist && _playerDist[id] >= 0) ? _playerDist[id] : Infinity;
-                                if (dd < bestDist) { bestDist = dd; bestDir = d; }
-                            }
-
-                            this.nextDir = bestDir;
-                        }
-                    } else {
-                        // No available choices: try reversing first, then any valid move
-                        if ((this.dir.x !== 0 || this.dir.y !== 0) && this.canMove(rev.x, rev.y)) {
-                            this.nextDir = rev;
-                        } else {
-                            for (let d of dirs) {
-                                if (this.canMove(d.x, d.y)) { this.nextDir = d; break; }
-                            }
-                        }
-                    }
-
-                    // If we've been stuck, force a random valid direction at the center
-                    if (this._stuckFrames > 30 && validMoves.length > 0) {
-                        this.nextDir = validMoves[Math.floor(Math.random() * validMoves.length)];
-                        this._stuckFrames = 0;
-                    }
-                }
 
                 this.move();
             }
@@ -542,47 +660,47 @@
                 const r = this.radius;
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                
+
                 // SCARED LOGIC
                 if (this.scared) {
                     // Flash when timer is low (last 120 frames approx 2 seconds)
                     if (powerTimer < 120 && Math.floor(Date.now() / 100) % 2 === 0) {
-                         // Flash White
+                        // Flash White
                         ctx.fillStyle = '#fff';
                     } else {
                         // Blue
                         ctx.fillStyle = '#2196f3';
                     }
-                    
+
                     ctx.font = `${Math.floor(r)}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText('3-0', 0, 0); 
+                    ctx.fillText('3-0', 0, 0);
                     ctx.restore();
                     return;
                 }
 
                 ctx.fillStyle = 'white';
-                ctx.fillRect(-r, -r, r*2, r*1.2);
+                ctx.fillRect(-r, -r, r * 2, r * 1.2);
                 ctx.strokeStyle = '#ccc';
-                ctx.strokeRect(-r, -r, r*2, r*1.2);
+                ctx.strokeRect(-r, -r, r * 2, r * 1.2);
                 ctx.strokeStyle = this.color;
                 ctx.lineWidth = 2;
-                ctx.strokeRect(-r*0.4, -r*0.4, r*0.8, r*0.5);
+                ctx.strokeRect(-r * 0.4, -r * 0.4, r * 0.8, r * 0.5);
                 ctx.strokeStyle = 'orange';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(-r*0.5, r*0.2);
-                ctx.lineTo(r*0.5, r*0.2);
+                ctx.moveTo(-r * 0.5, r * 0.2);
+                ctx.lineTo(r * 0.5, r * 0.2);
                 ctx.stroke();
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(-r*0.5, r*0.2);
-                ctx.lineTo(-r*0.3, r*0.8);
-                ctx.lineTo(0, r*0.9);
-                ctx.lineTo(r*0.3, r*0.8);
-                ctx.lineTo(r*0.5, r*0.2);
+                ctx.moveTo(-r * 0.5, r * 0.2);
+                ctx.lineTo(-r * 0.3, r * 0.8);
+                ctx.lineTo(0, r * 0.9);
+                ctx.lineTo(r * 0.3, r * 0.8);
+                ctx.lineTo(r * 0.5, r * 0.2);
                 ctx.stroke();
                 ctx.restore();
             }
@@ -592,144 +710,6 @@
         let ghosts = [];
         let powerTimer = 0;
         let ghostCombo = 0;
-
-        // --- Shared pathfinding caches (prevents per-ghost BFS stutter) ---
-        let _rows = 0;
-        let _cols = 0;
-        let _exitDist = null;   // Int16Array distance to nearest non-9 tile (0 outside spawn)
-        let _playerDist = null; // Int16Array distance to player's tile
-        let _bfsQueue = null;   // Int32Array queue
-        let _playerDistKey = '';
-
-        function _idx(r, c) { return r * _cols + c; }
-
-        function _allocDistCachesIfNeeded() {
-            if (!map || !map.length) return;
-            _rows = map.length;
-            _cols = map[0].length;
-            const size = _rows * _cols;
-            if (!_exitDist || _exitDist.length !== size) {
-                _exitDist = new Int16Array(size);
-                _playerDist = new Int16Array(size);
-                _bfsQueue = new Int32Array(size);
-            }
-        }
-
-        function _isWall(r, c) {
-            if (r < 0 || r >= _rows || c < 0 || c >= _cols) return true;
-            return map[r][c] === 1;
-        }
-
-        // Multi-source BFS: distance to nearest non-spawn tile (tile != 9), ignoring walls.
-        function buildExitDistanceMap() {
-            _allocDistCachesIfNeeded();
-            const size = _rows * _cols;
-            _exitDist.fill(-1);
-            let head = 0;
-            let tail = 0;
-
-            // Sources: any walkable, non-9 tile
-            for (let r = 0; r < _rows; r++) {
-                for (let c = 0; c < _cols; c++) {
-                    const t = map[r][c];
-                    if (t !== 1 && t !== 9) {
-                        const id = _idx(r, c);
-                        _exitDist[id] = 0;
-                        _bfsQueue[tail++] = id;
-                    }
-                }
-            }
-
-            while (head < tail) {
-                const cur = _bfsQueue[head++];
-                const r = (cur / _cols) | 0;
-                const c = cur - r * _cols;
-                const d0 = _exitDist[cur];
-
-                // up/down
-                if (r > 0 && !_isWall(r - 1, c)) {
-                    const ni = cur - _cols;
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-                if (r + 1 < _rows && !_isWall(r + 1, c)) {
-                    const ni = cur + _cols;
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-
-                // left/right (with tunnel wrap)
-                if (c > 0 && !_isWall(r, c - 1)) {
-                    const ni = cur - 1;
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                } else if (c === 0 && !_isWall(r, _cols - 1)) {
-                    const ni = cur + (_cols - 1);
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-
-                if (c + 1 < _cols && !_isWall(r, c + 1)) {
-                    const ni = cur + 1;
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                } else if (c === _cols - 1 && !_isWall(r, 0)) {
-                    const ni = cur - (_cols - 1);
-                    if (_exitDist[ni] === -1) { _exitDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-            }
-        }
-
-        // Single-source BFS from player tile; recomputed only when player changes tiles.
-        function updatePlayerDistanceMapIfNeeded() {
-            if (!player) return;
-            _allocDistCachesIfNeeded();
-
-            const pr = player.getRow();
-            const pc = player.getCol();
-            const key = pr + ',' + pc;
-            if (key === _playerDistKey) return;
-            _playerDistKey = key;
-
-            const size = _rows * _cols;
-            _playerDist.fill(-1);
-            if (_isWall(pr, pc)) return;
-
-            let head = 0;
-            let tail = 0;
-            const start = _idx(pr, pc);
-            _playerDist[start] = 0;
-            _bfsQueue[tail++] = start;
-
-            while (head < tail) {
-                const cur = _bfsQueue[head++];
-                const r = (cur / _cols) | 0;
-                const c = cur - r * _cols;
-                const d0 = _playerDist[cur];
-
-                // up/down
-                if (r > 0 && !_isWall(r - 1, c)) {
-                    const ni = cur - _cols;
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-                if (r + 1 < _rows && !_isWall(r + 1, c)) {
-                    const ni = cur + _cols;
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-
-                // left/right (with tunnel wrap)
-                if (c > 0 && !_isWall(r, c - 1)) {
-                    const ni = cur - 1;
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                } else if (c === 0 && !_isWall(r, _cols - 1)) {
-                    const ni = cur + (_cols - 1);
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-
-                if (c + 1 < _cols && !_isWall(r, c + 1)) {
-                    const ni = cur + 1;
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                } else if (c === _cols - 1 && !_isWall(r, 0)) {
-                    const ni = cur - (_cols - 1);
-                    if (_playerDist[ni] === -1) { _playerDist[ni] = d0 + 1; _bfsQueue[tail++] = ni; }
-                }
-            }
-        }
 
         function init() {
             if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) {
@@ -776,10 +756,7 @@
             score = 0;
             scoreEl.innerText = 0;
             player = new PacBron(10, 15);
-            player.nextDir = {x:1, y:0};
-
-            // Build shared exit-distance map once per level
-            buildExitDistanceMap();
+            player.nextDir = { x: 1, y: 0 };
             // Find spawn boxes (runs of tile value 9) and spawn two ghosts in each (3 boxes => 6 ghosts total)
             // Release order (10s interval): left, middle, right, then left, middle, right
             const ghostColors = ['#ff0000', '#00ff00', '#0000ff', '#ffb347', '#ff69b4', '#00ffff', '#ff00ff', '#a52a2a', '#8a2be2',];
@@ -818,7 +795,7 @@
 
         function activatePower() {
             // REDUCED TIMER: 350 frames is approx 6 seconds at 60fps
-            powerTimer = 350; 
+            powerTimer = 350;
             ghosts.forEach(g => g.scared = true);
             ghostCombo = 0;
         }
@@ -828,8 +805,8 @@
                 const dist = Math.hypot(player.x - g.x, player.y - g.y);
                 if (dist < TILE_SIZE * 0.8) {
                     if (g.scared) {
-                        g.x = 10 * TILE_SIZE + TILE_SIZE/2;
-                        g.y = 10 * TILE_SIZE + TILE_SIZE/2;
+                        g.x = 10 * TILE_SIZE + TILE_SIZE / 2;
+                        g.y = 10 * TILE_SIZE + TILE_SIZE / 2;
                         g.scared = false;
                         // Combo scoring: 200, 400, 800, 1600, ...
                         ghostCombo = (ghostCombo || 0) + 1;
@@ -849,8 +826,8 @@
                 }
             }
             let hasPellets = false;
-            for(let r=0; r<map.length; r++) {
-                for(let c=0; c<map[0].length; c++) {
+            for (let r = 0; r < map.length; r++) {
+                for (let c = 0; c < map[0].length; c++) {
                     if (map[r][c] === 0 || map[r][c] === 3) hasPellets = true;
                 }
             }
@@ -870,8 +847,8 @@
             ctx.strokeStyle = C_FLOOR_2;
             ctx.lineWidth = 1;
             ctx.beginPath();
-            for(let x=0; x<canvas.width; x+=TILE_SIZE) { ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); }
-            for(let y=0; y<canvas.height; y+=TILE_SIZE) { ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); }
+            for (let x = 0; x < canvas.width; x += TILE_SIZE) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+            for (let y = 0; y < canvas.height; y += TILE_SIZE) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
             ctx.stroke();
 
             for (let r = 0; r < map.length; r++) {
@@ -879,15 +856,15 @@
                     const tile = map[r][c];
                     const x = c * TILE_SIZE;
                     const y = r * TILE_SIZE;
-                    const cx = x + TILE_SIZE/2;
-                    const cy = y + TILE_SIZE/2;
+                    const cx = x + TILE_SIZE / 2;
+                    const cy = y + TILE_SIZE / 2;
 
                     if (tile === 1) {
                         ctx.fillStyle = '#000';
-                        ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+                        ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                         ctx.strokeStyle = C_PURPLE;
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(x+2,y+2,TILE_SIZE-4, TILE_SIZE-4);
+                        ctx.strokeRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4);
                     } else if (tile === 0) {
                         ctx.fillStyle = C_BALL;
                         ctx.beginPath();
@@ -896,14 +873,14 @@
                         ctx.strokeStyle = '#000';
                         ctx.lineWidth = 1;
                         ctx.beginPath();
-                        ctx.moveTo(cx, cy - TILE_SIZE*0.25);
-                        ctx.lineTo(cx, cy + TILE_SIZE*0.25);
+                        ctx.moveTo(cx, cy - TILE_SIZE * 0.25);
+                        ctx.lineTo(cx, cy + TILE_SIZE * 0.25);
                         ctx.stroke();
                     } else if (tile === 3) {
-                        if (Math.floor(Date.now()/200)%2===0) {
+                        if (Math.floor(Date.now() / 200) % 2 === 0) {
                             ctx.fillStyle = '#ffd700';
                             ctx.beginPath();
-                            ctx.arc(cx, cy, TILE_SIZE * 0.4, 0, Math.PI*2);
+                            ctx.arc(cx, cy, TILE_SIZE * 0.4, 0, Math.PI * 2);
                             ctx.fill();
                             ctx.shadowColor = '#ffd700';
                             ctx.shadowBlur = 10;
@@ -914,7 +891,7 @@
                         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
                         ctx.beginPath();
                         ctx.moveTo(x, cy);
-                        ctx.lineTo(x+TILE_SIZE, cy);
+                        ctx.lineTo(x + TILE_SIZE, cy);
                         ctx.stroke();
                     }
                 }
@@ -933,7 +910,6 @@
                 }
             }
             player.update();
-            updatePlayerDistanceMapIfNeeded();
             ghosts.forEach(g => g.update());
             checkCollisions();
             draw();
@@ -982,23 +958,27 @@
         });
 
         window.addEventListener('keydown', e => {
+            if (!keyboardDetected) {
+                keyboardDetected = true;
+                updateDPadVisibility();
+            }
             if (!gameActive) return;
-            switch(e.key) {
-                case 'ArrowUp': player.nextDir = {x:0, y:-1}; break;
-                case 'ArrowDown': player.nextDir = {x:0, y:1}; break;
-                case 'ArrowLeft': player.nextDir = {x:-1, y:0}; break;
-                case 'ArrowRight': player.nextDir = {x:1, y:0}; break;
+            switch (e.key) {
+                case 'ArrowUp': case 'w': case 'W': player.nextDir = { x: 0, y: -1 }; break;
+                case 'ArrowDown': case 's': case 'S': player.nextDir = { x: 0, y: 1 }; break;
+                case 'ArrowLeft': case 'a': case 'A': player.nextDir = { x: -1, y: 0 }; break;
+                case 'ArrowRight': case 'd': case 'D': player.nextDir = { x: 1, y: 0 }; break;
             }
         });
 
         const setupBtn = (id, dx, dy) => {
             const btn = document.getElementById(id);
             const handler = (e) => {
-                if(e.cancelable) e.preventDefault();
-                if(gameActive && player) player.nextDir = {x:dx, y:dy};
+                if (e.cancelable) e.preventDefault();
+                if (gameActive && player) player.nextDir = { x: dx, y: dy };
             };
-            btn.addEventListener('touchstart', handler, {passive:false});
-            btn.addEventListener('mousedown', handler); 
+            btn.addEventListener('touchstart', handler, { passive: false });
+            btn.addEventListener('mousedown', handler);
         };
         setupBtn('btn-up', 0, -1);
         setupBtn('btn-down', 0, 1);
@@ -1010,7 +990,7 @@
         canvas.addEventListener('touchstart', e => {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-        }, {passive: false});
+        }, { passive: false });
         canvas.addEventListener('touchmove', e => {
             if (!gameActive) return;
             e.preventDefault();
@@ -1018,24 +998,65 @@
             const y = e.touches[0].clientY;
             const dx = x - touchStartX;
             const dy = y - touchStartY;
-            const threshold = 15; 
+            const threshold = 15;
             if (Math.abs(dx) > Math.abs(dy)) {
                 if (Math.abs(dx) > threshold) {
-                    player.nextDir = {x: dx > 0 ? 1 : -1, y: 0};
+                    player.nextDir = { x: dx > 0 ? 1 : -1, y: 0 };
                     touchStartX = x; touchStartY = y;
                 }
             } else {
                 if (Math.abs(dy) > threshold) {
-                    player.nextDir = {x: 0, y: dy > 0 ? 1 : -1};
+                    player.nextDir = { x: 0, y: dy > 0 ? 1 : -1 };
                     touchStartX = x; touchStartY = y;
                 }
             }
-        }, {passive: false});
+        }, { passive: false });
 
         startBtn.addEventListener('click', () => {
             overlay.style.display = 'none';
             if (!player || !gameActive) init();
         });
+
+        // --- Settings & D-Pad Logic ---
+        let forceTouchControls = localStorage.getItem('pacbron_force_touch') === 'true';
+        let keyboardDetected = false;
+
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsMenu = document.getElementById('settings-menu');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const forceTouchCheckbox = document.getElementById('force-touch-checkbox');
+
+        forceTouchCheckbox.checked = forceTouchControls;
+
+        function updateDPadVisibility() {
+            const dpad = document.getElementById('d-pad');
+            const isTouchScreen = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+            
+            if (forceTouchControls || (!keyboardDetected && isTouchScreen)) {
+                dpad.style.display = 'grid';
+            } else {
+                dpad.style.display = 'none';
+            }
+        }
+
+        settingsBtn.addEventListener('click', () => {
+            if (gameActive && !paused) setPaused(true);
+            settingsMenu.style.display = 'flex';
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsMenu.style.display = 'none';
+        });
+
+        forceTouchCheckbox.addEventListener('change', (e) => {
+            forceTouchControls = e.target.checked;
+            localStorage.setItem('pacbron_force_touch', forceTouchControls);
+            updateDPadVisibility();
+        });
+
+        // Initial D-Pad setup
+        updateDPadVisibility();
+        window.addEventListener('resize', updateDPadVisibility);
 
         setTimeout(() => {
             resizeGame();
@@ -1046,4 +1067,5 @@
 
     </script>
 </body>
+
 </html>

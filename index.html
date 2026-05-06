@@ -4,949 +4,378 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoolBronGames</title>
-    <link rel="icon" type="image/png" href="coolbrongames.png">
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description" content="Play free LeBron-themed arcade games. FlappyBron, PacBron, LeBron Fighter and more.">
+    <link rel="icon" type="image/png" href="coolbrongames_new.png">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Firebase (Local) -->
     <script src="firebase-app-compat.js"></script>
     <script src="firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <style>
-        /* Custom font for a game-like feel */
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Setting the default font for the body and using Press Start 2P for titles */
+        :root {
+            --bg: #0b0e1a;
+            --surface: #151929;
+            --surface-hover: #1d2340;
+            --gold: #fdb927;
+            --purple: #552583;
+            --text: #e2e8f0;
+            --text-dim: #8892a8;
+            --accent-blue: #3b82f6;
+            --radius: 12px;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark background for a retro feel */
-            transition: background-color 0.3s ease;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        body.dark-mode {
-            background-color: #0a0e27;
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 clamp(16px, 4vw, 32px);
         }
 
-        body.light-mode {
-            background-color: #696969;
-            color: #333;
+        /* ===== HEADER ===== */
+        header {
+            padding: clamp(24px, 6vw, 48px) 0 clamp(16px, 4vw, 32px);
+            text-align: center;
         }
 
-        .pixel-font {
-            font-family: 'Press Start+2P', cursive;
-        }
-
-        /* Custom Pixel Button Effect */
-        .pixel-btn {
-            position: relative;
-            border: 4px solid #fcfc30; /* Yellow border */
-            border-radius: 8px;
-            box-shadow: 
-                -4px -4px 0 #fcfc30, /* Inner yellow pixel shadow */
-                4px 4px 0 #1e3a8a; /* Outer dark blue pixel shadow */
-            transition: all 0.1s ease-out;
-        }
-        .pixel-btn:hover {
-            transform: translate(2px, 2px);
-            box-shadow: 
-                -2px -2px 0 #fcfc30,
-                2px 2px 0 #1e3a8a;
-        }
-        .pixel-btn:active {
-            transform: translate(4px, 4px);
-            box-shadow: 0 0 0 transparent;
-        }
-
-        /* Custom Card Effect */
-        .pixel-card {
-            border: 4px solid #1e3a8a; /* Dark blue border */
-            box-shadow: 
-                -8px -8px 0 #3b82f6, /* Blue inner shadow */
-                8px 8px 0 #a855f7; /* Purple outer shadow */
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .pixel-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 
-                -12px -12px 0 #3b82f6, /* Blue inner shadow */
-                12px 12px 0 #a855f7; /* Purple outer shadow */
-        }
-
-        /* Game card link styles */
-        .game-card-link {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-            height: 100%;
-        }
-
-        /* SVG styles for the LeBron Pixel Head */
-        .lebron-pixel-svg {
-            width: 100px;
-            height: 100px;
+        header img {
+            max-width: min(100%, 500px);
+            height: auto;
             margin: 0 auto;
             display: block;
         }
 
-        /* Uniform game thumbnail sizing */
-        .game-thumbnail {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            display: block;
+        .tagline {
+            font-size: clamp(12px, 2.5vw, 16px);
+            color: var(--text-dim);
+            margin-top: 12px;
         }
 
-        /* Game preview modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
+        /* ===== NAV TABS ===== */
+        .nav-tabs {
             display: flex;
-        }
-
-        .modal-content {
-            background: #1e293b;
-            border: 4px solid #1e3a8a;
-            padding: 2rem;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #ef4444;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-        }
-
-        /* Stats display */
-        .stat-box {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid #fcfc30;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #fcfc30;
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: #e0e7ff;
-            margin-top: 0.5rem;
-        }
-
-        /* Achievement badges */
-        .achievement-badge {
-            display: inline-flex;
-            align-items: center;
             justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+            gap: 8px;
+            margin-bottom: clamp(24px, 5vw, 40px);
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(8px, 1.8vw, 11px);
+            padding: 10px 18px;
+            background: var(--surface);
+            border: 2px solid transparent;
             border-radius: 8px;
-            border: 2px solid #fcfc30;
-            margin: 0.5rem;
+            color: var(--text-dim);
             cursor: pointer;
-            transition: transform 0.2s;
-            font-size: 1.5rem;
-        }
-
-        .achievement-badge:hover {
-            transform: scale(1.1);
-        }
-
-        /* Difficulty badge */
-        .difficulty-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-
-        .difficulty-easy {
-            background-color: #10b981;
-            color: white;
-        }
-
-        .difficulty-medium {
-            background-color: #f59e0b;
-            color: white;
-        }
-
-        .difficulty-hard {
-            background-color: #ef4444;
-            color: white;
-        }
-
-        /* Leaderboard table */
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-
-        .leaderboard-table th,
-        .leaderboard-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 2px solid #3b82f6;
-        }
-
-        .leaderboard-table th {
-            background: #1e3a8a;
-            color: #fcfc30;
-            font-weight: bold;
-        }
-
-        .leaderboard-table tr:hover {
-            background: #2d3748;
-        }
-
-        /* Social share buttons */
-        .share-btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            margin: 0.25rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        .share-btn:hover {
-            opacity: 0.8;
-        }
-
-        .share-twitter {
-            background: #1da1f2;
-            color: white;
-        }
-
-        .share-facebook {
-            background: #4267b2;
-            color: white;
-        }
-
-        .share-copy {
-            background: #6366f1;
-            color: white;
-        }
-
-        /* Theme toggle button */
-        .theme-toggle {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 500;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 3px solid #fcfc30;
-            background: #1e3a8a;
-            color: #fcfc30;
-            cursor: pointer;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(252, 252, 48, 0.5);
-        }
-
-        /* Tab navigation */
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
-            background: #2d3748;
-            border: 2px solid #4b5563;
-            color: #cbd5e1;
-            cursor: pointer;
-            margin-right: 0.5rem;
-            border-radius: 6px;
             transition: all 0.2s;
         }
 
-        .tab-btn.active {
-            background: #3b82f6;
-            border-color: #fcfc30;
-            color: #fcfc30;
+        .nav-tab:hover { background: var(--surface-hover); color: var(--text); }
+        .nav-tab.active { border-color: var(--gold); color: var(--gold); background: var(--surface-hover); }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ===== GAME CARDS ===== */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+            gap: clamp(16px, 3vw, 24px);
         }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Controls guide */
-        .controls-guide {
-            background: #1e293b;
-            padding: 1.5rem;
-            border-left: 4px solid #fcfc30;
-            margin: 1rem 0;
-            border-radius: 6px;
-        }
-
-        .control-item {
+        .game-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+            text-decoration: none;
+            color: inherit;
             display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #334155;
+            flex-direction: column;
         }
 
-        .control-item:last-child {
-            border-bottom: none;
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--gold);
+            box-shadow: 0 12px 40px rgba(253, 185, 39, 0.12);
         }
 
-        .key-badge {
-            background: #1e3a8a;
-            color: #fcfc30;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 0.875rem;
+        .game-card img {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
         }
 
-        /* Countdown timer */
-        .countdown {
-            font-size: 2rem;
-            color: #fcfc30;
-            font-weight: bold;
+        .game-card-body {
+            padding: clamp(14px, 3vw, 20px);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(12px, 2.5vw, 16px);
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .game-card-desc {
+            font-size: clamp(12px, 2vw, 14px);
+            color: var(--text-dim);
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .game-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-green { background: #10b981; color: #fff; }
+        .badge-yellow { background: #f59e0b; color: #fff; }
+        .badge-red { background: #ef4444; color: #fff; }
+
+        .play-btn {
+            margin-left: auto;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            padding: 8px 16px;
+            background: var(--gold);
+            color: var(--bg);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .play-btn:hover { background: #ffcc47; }
+
+        /* ===== LEADERBOARD ===== */
+        .lb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+            gap: clamp(16px, 3vw, 24px);
+        }
+
+        .lb-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: clamp(16px, 3vw, 24px);
+            border: 2px solid #1e293b;
+        }
+
+        .lb-card h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(10px, 2vw, 13px);
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+
+        .lb-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .lb-table th, .lb-table td {
+            padding: 10px 8px;
+            text-align: left;
+            font-size: clamp(11px, 2vw, 13px);
+        }
+
+        .lb-table th {
+            color: var(--gold);
+            border-bottom: 2px solid var(--purple);
+            font-weight: 700;
+        }
+
+        .lb-table td {
+            color: var(--text-dim);
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .lb-table tr:hover td { color: var(--text); }
+
+        /* ===== FOOTER ===== */
+        footer {
             text-align: center;
-            margin: 1rem 0;
-        }
-
-        /* Mobile & Tablet Responsive Design */
-        @media (max-width: 768px) {
-            /* Reduce heading sizes on mobile */
-            h1 {
-                font-size: 2rem !important;
-            }
-            
-            h2 {
-                font-size: 1.5rem !important;
-            }
-
-            /* Adjust game thumbnails for smaller screens */
-            .game-thumbnail {
-                height: 200px;
-            }
-
-            /* Make buttons more touch-friendly */
-            .pixel-btn, .tab-btn, .share-btn {
-                min-height: 44px;
-                padding: 0.75rem 1.25rem;
-            }
-
-            /* Adjust stat boxes */
-            .stat-box {
-                padding: 0.75rem;
-            }
-
-            .stat-value {
-                font-size: 1.5rem;
-            }
-
-            /* Reduce modal padding */
-            .modal-content {
-                padding: 1.5rem;
-                width: 95%;
-            }
-
-            /* Stack achievements on mobile */
-            .achievement-badge {
-                margin: 0.25rem;
-            }
-
-            /* Adjust leaderboard table */
-            .leaderboard-table th,
-            .leaderboard-table td {
-                padding: 0.5rem 0.25rem;
-                font-size: 0.875rem;
-            }
-
-            /* Make countdown smaller on mobile */
-            .countdown {
-                font-size: 1.5rem;
-            }
-
-            /* Adjust pixel card shadows for mobile */
-            .pixel-card {
-                box-shadow: 
-                    -4px -4px 0 #3b82f6,
-                    4px 4px 0 #a855f7;
-            }
-
-            .pixel-card:hover {
-                box-shadow: 
-                    -6px -6px 0 #3b82f6,
-                    6px 6px 0 #a855f7;
-            }
-        }
-
-        @media (max-width: 480px) {
-            /* Extra small mobile phones */
-            h1 {
-                font-size: 1.5rem !important;
-            }
-
-            .game-thumbnail {
-                height: 180px;
-            }
-
-            .stat-value {
-                font-size: 1.25rem;
-            }
-
-            .difficulty-badge {
-                font-size: 0.65rem;
-                padding: 0.2rem 0.4rem;
-            }
+            padding: clamp(24px, 5vw, 48px) 0;
+            margin-top: clamp(32px, 6vw, 64px);
+            border-top: 1px solid #1e293b;
+            color: var(--text-dim);
+            font-size: clamp(10px, 1.8vw, 12px);
+            line-height: 1.8;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark-mode">
+<body>
 
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
+<div class="container">
 
-    <!-- Main Container -->
-    <div class="max-w-6xl mx-auto">
+    <!-- HEADER -->
+    <header>
+        <img src="coolbrongames_new.png" alt="CoolBronGames">
+        <p class="tagline">Free LeBron-themed arcade games. Pick one and play.</p>
+    </header>
 
-        <!-- Header/Title Section -->
-        <header class="text-center mb-16 p-0">
-            <img src="coolbrongames.png" alt="CoolBronGames" class="w-full h-auto">
-        </header>
+    <!-- NAV -->
+    <nav class="nav-tabs" id="nav-tabs">
+        <button class="nav-tab active" data-tab="games">Games</button>
+        <button class="nav-tab" data-tab="leaderboard">Leaderboard</button>
+    </nav>
 
-        <!-- About Section -->
-       
-<!--
-    
-        <section class="mb-16">
-            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Your Stats</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="stat-box">
-                    <div class="stat-value" id="totalGamesPlayed">0</div>
-                    <div class="stat-label">Games Played</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="bestScore">0</div>
-                    <div class="stat-label">Best Score</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="totalPlaytime">0h</div>
-                    <div class="stat-label">Total Playtime</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="coinsEarned">0</div>
-                    <div class="stat-label">Coins Earned</div>
-                </div>
-            </div>
-        </section> 
+    <!-- GAMES TAB -->
+    <section id="panel-games" class="tab-panel active">
+        <div class="game-grid">
 
-
-        <section class="mb-16">
-            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Achievements Unlocked</h2>
-            <div class="text-center" id="achievementsContainer">
-                <div class="achievement-badge" title="First Flight - Play FlappyBron">🏀</div>
-                <div class="achievement-badge" title="High Flyer - Score 50+ in FlappyBron">✈️</div>
-                <div class="achievement-badge" title="Maze Master - Play PacBron">🎮</div>
-                <div class="achievement-badge" title="Collector - Unlock 5 cosmetics">🎁</div>
-                <div class="achievement-badge" title="Champion - Reach top of leaderboard">👑</div>
-            </div>
-            <p class="text-center text-gray-400 text-sm mt-4">Play games to unlock more achievements!</p>
-        </section>
-
-        <section class="mb-16">
-            <h2 class="pixel-font text-2xl text-yellow-400 mb-6 text-center">Games</h2>
-            
-            <div class="flex justify-center mb-6 flex-wrap">
-                <button class="tab-btn active" onclick="switchTab('all')">All Games</button>
-                <button class="tab-btn" onclick="switchTab('active')">Currently Playing</button>
-                <button class="tab-btn" onclick="switchTab('comingsoon')">Coming Soon</button>
-                <button class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
-            </div>
-
-            <!-- All Games Tab -->
-            <div id="tab-all" class="tab-content active">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    
-                    <!-- Game Card 1: FlappyBron -->
-                    <a href="flappybron-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
-                        <img src="Untitled design.png" alt="FlappyBron" class="game-thumbnail">
-                        <div class="mb-3">
-                            <span class="difficulty-badge difficulty-easy">Easy</span>
-                            <span class="difficulty-badge difficulty-medium">Medium</span>
-                            <span class="difficulty-badge difficulty-hard">Impossible</span>
-                        </div>
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
-                        <p class="text-sm text-gray-400 mb-4">
-                            Tap to fly LeBron through the pipes and rack up championship scores. Don't get dunked on! Features multiple difficulty levels, customizable skins, and an in-game shop.
-                        </p>
-                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="flappyplaysStat">0h 0m</span></p>
-                    </a>
-
-                    <!-- Game Card 2: PacBron -->
-                    <a href="pacbron-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
-                        <img src="pacbron.png" alt="PacBron" class="game-thumbnail">
-                        <div class="mb-3">
-                            <span class="difficulty-badge difficulty-medium">Medium</span>
-                            <span class="difficulty-badge difficulty-hard">Hard</span>
-                        </div>
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
-                        <p class="text-sm text-gray-400 mb-4">
-                            Navigate the maze as PacBron, eating pellets and dodging pixelated opponents! Grab power-up rings to turn the tables on enemies and score big.
-                        </p>
-                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="pacplaysStat">0h 0m</span></p>
-                    </a>
-
-                    <!-- Game Card 3: LeBron Fighter -->
-                    <a href="lebronfighter-info.html" class="pixel-card bg-gray-800 p-6 rounded-xl cursor-pointer game-card-link">
-                        <img src="coolbrongames.png" alt="LeBron Fighter" class="game-thumbnail">
-                        <div class="mb-3">
-                            <span class="difficulty-badge difficulty-medium">Medium</span>
-                            <span class="difficulty-badge difficulty-hard">Hard</span>
-                        </div>
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">LeBron Fighter 👑</h3>
-                        <p class="text-sm text-gray-400 mb-4">
-                            Street Fighter meets basketball! Battle as Lakers or Heat LeBron in this 2D fighting game. Master special moves, build combos, and dominate the court. 1P vs CPU or 2P local multiplayer!
-                        </p>
-                        <p class="text-xs text-gray-500 mb-0">⏱️ Time Played: <span id="fighterplaysStat">0h 0m</span></p>
-                    </a>
-
-                    <!-- Game Card 4: Coming Soon -->
-                    
-                </div>
-            </div>
-
-            <!-- Active Games Tab -->
-            <div id="tab-active" class="tab-content">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <img src="Untitled design.png" alt="FlappyBron" class="game-thumbnail">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">FlappyBron</h3>
-                        <div class="stat-box mt-4">
-                            <div class="stat-value">Unlocked</div>
-                            <div class="stat-label">Full Access</div>
-                        </div>
-                    </div>
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <img src="pacbron.png" alt="PacBron" class="game-thumbnail">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">PacBron</h3>
-                        <div class="stat-box mt-4">
-                            <div class="stat-value">Unlocked</div>
-                            <div class="stat-label">Full Access</div>
-                        </div>
-                    </div>
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <img src="coolbrongames.png" alt="LeBron Fighter" class="game-thumbnail">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-2">LeBron Fighter</h3>
-                        <div class="stat-box mt-4">
-                            <div class="stat-value">Unlocked</div>
-                            <div class="stat-label">Full Access</div>
-                        </div>
+            <!-- FlappyBron -->
+            <a href="flappybron-info.html" class="game-card">
+                <img src="flappybron_cover.png" alt="FlappyBron">
+                <div class="game-card-body">
+                    <h2 class="game-card-title">FlappyBron</h2>
+                    <p class="game-card-desc">Tap to keep LeBron in the air and dodge pipes. Earn rings, unlock skins, and chase your high score.</p>
+                    <div class="game-card-footer">
+                        <span class="badge badge-green">Easy</span>
+                        <span class="badge badge-yellow">Medium</span>
+                        <span class="badge badge-red">Impossible</span>
                     </div>
                 </div>
-            </div>
+            </a>
 
-            <!-- Coming Soon Tab -->
-            <div id="tab-comingsoon" class="tab-content">
-                <div class="pixel-card bg-gray-800 p-8 rounded-xl text-center">
-                    <h3 class="pixel-font text-2xl text-yellow-400 mb-4">Exciting Games in Development</h3>
-                
-                    <ul class="text-left inline-block text-gray-400 mb-6">
-   
-                </div>
-            </div>
-
-            <!-- Leaderboard Tab -->
-            <div id="tab-leaderboard" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">FlappyBron - Global Leaderboard</h3>
-                        <table class="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Player</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="flappyleaderboardBody">
-                                <tr>
-                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">PacBron - Global Leaderboard</h3>
-                        <table class="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Player</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pacleaderboardBody">
-                                <tr>
-                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="pixel-card bg-gray-800 p-6 rounded-xl">
-                        <h3 class="pixel-font text-xl text-yellow-400 mb-4">LeBron Fighter - Global Leaderboard</h3>
-                        <table class="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Player</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fighterleaderboardBody">
-                                <tr>
-                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading scores...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <!-- PacBron -->
+            <a href="pacbron-info.html" class="game-card">
+                <img src="pacbron_cover.png" alt="PacBron">
+                <div class="game-card-body">
+                    <h2 class="game-card-title">PacBron</h2>
+                    <p class="game-card-desc">Classic maze game. Eat every ball on the court, grab power-ups to turn the tables on ghosts, and clear the board.</p>
+                    <div class="game-card-footer">
+                        <span class="badge badge-yellow">Medium</span>
+                        <span class="badge badge-red">Hard</span>
                     </div>
                 </div>
-            </div>
-        </section>
+            </a>
 
-        <!-- Controls Guide Section -->
-       
+            <!-- LeBron Fighter -->
+            <a href="lebronfighter-info.html" class="game-card">
+                <img src="lebronfighter_cover.png" alt="LeBron Fighter">
+                <div class="game-card-body">
+                    <h2 class="game-card-title">LeBron Fighter 👑</h2>
+                    <p class="game-card-desc">2D fighting game. Pick your LeBron era, learn combos, and battle the CPU or a friend on the same screen.</p>
+                    <div class="game-card-footer">
+                        <span class="badge badge-yellow">Medium</span>
+                        <span class="badge badge-red">Hard</span>
+                    </div>
+                </div>
+            </a>
 
-        <!-- Footer Section -->
-        <footer class="text-center pt-8 border-t-4 border-double border-yellow-400">
-       
-            <div class="text-xs text-gray-600 space-y-2 mb-4">
-                <p>Built with HTML5 Canvas | Inspired by LeBron James Legacy</p>
-                <p>🎮 <a href="#" class="text-yellow-400 hover:underline">Terms of Service</a> | 
-                   <a href="#" class="text-yellow-400 hover:underline">Privacy Policy</a> | 
-                   <a href="#" class="text-yellow-400 hover:underline">Contact Us</a></p>
-            </div>
-            <p class="text-xs text-gray-600">
-                Not affiliated with the NBA, LeBron James, or any other entity. All assets are original creations for entertainment purposes.
-            </p>
-        </footer>
-
-    </div>
-
-    <!-- Game Preview Modal -->
-    <div id="gamePreviewModal" class="modal" onclick="closeGamePreview(event)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="modal-close" onclick="closeGamePreview()">✕</button>
-            <h2 class="pixel-font text-2xl text-yellow-400 mb-4" id="previewTitle">Game Details</h2>
-            <div id="previewContent"></div>
         </div>
-    </div>
+    </section>
 
-    <script>
-        // Theme Toggle Functionality
-        const themeToggle = document.getElementById('themeToggle');
-        const htmlBody = document.body;
+    <!-- LEADERBOARD TAB -->
+    <section id="panel-leaderboard" class="tab-panel">
+        <div class="lb-grid">
 
-        function toggleTheme() {
-            if (htmlBody.classList.contains('dark-mode')) {
-                htmlBody.classList.remove('dark-mode');
-                htmlBody.classList.add('light-mode');
-                themeToggle.textContent = '☀️';
-                localStorage.setItem('theme', 'light');
-            } else {
-                htmlBody.classList.remove('light-mode');
-                htmlBody.classList.add('dark-mode');
-                themeToggle.textContent = '🌙';
-                localStorage.setItem('theme', 'dark');
-            }
+            <div class="lb-card">
+                <h3>FlappyBron</h3>
+                <table class="lb-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+                    <tbody id="lb-flappy"><tr><td colspan="3" style="text-align:center;padding:1.5rem;">Loading…</td></tr></tbody>
+                </table>
+            </div>
+
+            <div class="lb-card">
+                <h3>PacBron</h3>
+                <table class="lb-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+                    <tbody id="lb-pac"><tr><td colspan="3" style="text-align:center;padding:1.5rem;">Loading…</td></tr></tbody>
+                </table>
+            </div>
+
+            <div class="lb-card">
+                <h3>LeBron Fighter</h3>
+                <table class="lb-table">
+                    <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+                    <tbody id="lb-fighter"><tr><td colspan="3" style="text-align:center;padding:1.5rem;">Loading…</td></tr></tbody>
+                </table>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Not affiliated with the NBA or LeBron James. All assets are original fan creations.</p>
+    </footer>
+
+</div>
+
+<script>
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.nav-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tab;
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('panel-' + target).classList.add('active');
+        });
+    });
+
+    // --- Firebase Leaderboards ---
+    async function loadLeaderboards() {
+        try {
+            await renderBoard('FlappyBron', 'lb-flappy');
+            await renderBoard('PacBron', 'lb-pac');
+            await renderBoard('LeBronFighter', 'lb-fighter');
+        } catch (e) {
+            console.log('Leaderboard load skipped:', e.message);
         }
+    }
 
-        themeToggle.addEventListener('click', toggleTheme);
-
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        if (savedTheme === 'light') {
-            htmlBody.classList.remove('dark-mode');
-            htmlBody.classList.add('light-mode');
-            themeToggle.textContent = '☀️';
+    async function renderBoard(game, tbodyId) {
+        const scores = await getTopScores(game, 10);
+        const tbody = document.getElementById(tbodyId);
+        if (scores.length > 0) {
+            tbody.innerHTML = scores.map((s, i) =>
+                `<tr><td>#${i + 1}</td><td>${s.playerName}</td><td>${s.score.toLocaleString()}</td></tr>`
+            ).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;">No scores yet.</td></tr>';
         }
+    }
 
-        // Tab Switching
-        function switchTab(tabName) {
-            const tabs = document.querySelectorAll('.tab-content');
-            const buttons = document.querySelectorAll('.tab-btn');
-            
-            tabs.forEach(tab => tab.classList.remove('active'));
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            document.getElementById('tab-' + tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Load Stats from localStorage
-        function loadStats() {
-            try {
-                // FlappyBron stats
-                const flappyData = localStorage.getItem('flappybronGameData');
-                let flappyPlaytime = 0;
-                if (flappyData) {
-                    const data = JSON.parse(flappyData);
-                    document.getElementById('flappyscoreStat').textContent = data.score || 0;
-                    document.getElementById('flappyleadScore').textContent = data.score || 0;
-                    
-                    // Get playtime in minutes (stored or estimated)
-                    flappyPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
-                    const flappyHours = Math.floor(flappyPlaytime / 60);
-                    const flappyMins = flappyPlaytime % 60;
-                    document.getElementById('flappyplaysStat').textContent = `${flappyHours}h ${flappyMins}m`;
-                }
-
-                // PacBron stats
-                const pacData = localStorage.getItem('pacbronGameData');
-                let pacPlaytime = 0;
-                if (pacData) {
-                    const data = JSON.parse(pacData);
-                    document.getElementById('pacscoreStat').textContent = data.score || 0;
-                    document.getElementById('pacleadScore').textContent = data.score || 0;
-                    
-                    // Get playtime in minutes (stored or estimated)
-                    pacPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
-                    const pacHours = Math.floor(pacPlaytime / 60);
-                    const pacMins = pacPlaytime % 60;
-                    document.getElementById('pacplaysStat').textContent = `${pacHours}h ${pacMins}m`;
-                }
-
-                // LeBron Fighter stats
-                const fighterData = localStorage.getItem('lebronfighterGameData');
-                let fighterPlaytime = 0;
-                if (fighterData) {
-                    const data = JSON.parse(fighterData);
-                    
-                    // Get playtime in minutes (stored or estimated)
-                    fighterPlaytime = data.playtime || (data.gamesPlayed || 0) * 2;
-                    const fighterHours = Math.floor(fighterPlaytime / 60);
-                    const fighterMins = fighterPlaytime % 60;
-                    document.getElementById('fighterplaysStat').textContent = `${fighterHours}h ${fighterMins}m`;
-                }
-
-                // Overall stats
-                const totalStats = {
-                    gamesPlayed: (flappyData ? JSON.parse(flappyData).gamesPlayed || 0 : 0) + (pacData ? JSON.parse(pacData).gamesPlayed || 0 : 0) + (fighterData ? JSON.parse(fighterData).gamesPlayed || 0 : 0),
-                    bestScore: Math.max(flappyData ? JSON.parse(flappyData).score || 0 : 0, pacData ? JSON.parse(pacData).score || 0 : 0, fighterData ? JSON.parse(fighterData).score || 0 : 0),
-                    coinsEarned: (flappyData ? JSON.parse(flappyData).coins || 0 : 0) + (pacData ? JSON.parse(pacData).coins || 0 : 0) + (fighterData ? JSON.parse(fighterData).coins || 0 : 0)
-                };
-
-                document.getElementById('totalGamesPlayed').textContent = totalStats.gamesPlayed;
-                document.getElementById('bestScore').textContent = totalStats.bestScore;
-                document.getElementById('coinsEarned').textContent = totalStats.coinsEarned;
-
-                // Calculate total playtime
-                const totalMinutes = flappyPlaytime + pacPlaytime + fighterPlaytime;
-                const totalHours = Math.floor(totalMinutes / 60);
-                const remainingMins = totalMinutes % 60;
-                document.getElementById('totalPlaytime').textContent = `${totalHours}h ${remainingMins}m`;
-            } catch (e) {
-                console.log('No saved stats found');
-            }
-        }
-
-        loadStats();
-
-        // Game Preview Modal
-        function openGamePreview(game) {
-            const modal = document.getElementById('gamePreviewModal');
-            const title = document.getElementById('previewTitle');
-            const content = document.getElementById('previewContent');
-
-            if (game === 'flappybron') {
-                title.textContent = 'FlappyBron - Game Details';
-                content.innerHTML = `
-                    <p class="text-gray-300 mb-4">Tap to fly LeBron through the pipes and rack up championship scores!</p>
-                    <h3 class="text-yellow-400 font-bold mb-2">Features:</h3>
-                    <ul class="text-gray-400 mb-4 list-disc list-inside">
-                        <li>Three difficulty levels (Easy, Medium, Impossible)</li>
-                        <li>7+ unique LeBron skins to unlock</li>
-                        <li>In-game shop with cosmetics</li>
-                        <li>Multiple obstacle types</li>
-                        <li>Fullscreen gameplay</li>
-                        <li>Smooth jump animation</li>
-                    </ul>
-                    <h3 class="text-yellow-400 font-bold mb-2">Tips:</h3>
-                    <ul class="text-gray-400 list-disc list-inside">
-                        <li>Time your jumps carefully</li>
-                        <li>Collect coins for rewards</li>
-                        <li>Unlock harder difficulties for more challenge</li>
-                        <li>Customize your appearance in the shop</li>
-                    </ul>
-                    <button onclick="closeGamePreview(); window.location.href='flappybron.html'" class="mt-6 w-full pixel-btn bg-red-600 text-white py-3 rounded-lg font-bold">
-                        Play Now
-                    </button>
-                `;
-            } else if (game === 'pacbron') {
-                title.textContent = 'PacBron - Game Details';
-                content.innerHTML = `
-                    <p class="text-gray-300 mb-4">Navigate mazes as PacBron, eating pellets and dodging ghostly opponents!</p>
-                    <h3 class="text-yellow-400 font-bold mb-2">Features:</h3>
-                    <ul class="text-gray-400 mb-4 list-disc list-inside">
-                        <li>Classic maze gameplay with a twist</li>
-                        <li>Multiple difficulty levels</li>
-                        <li>Power-up mechanics</li>
-                        <li>Increasing ghost AI difficulty</li>
-                        <li>Highscore tracking</li>
-                        <li>Responsive controls</li>
-                    </ul>
-                    <h3 class="text-yellow-400 font-bold mb-2">Tips:</h3>
-                    <ul class="text-gray-400 list-disc list-inside">
-                        <li>Use power-ups wisely</li>
-                        <li>Plan your route to avoid ghosts</li>
-                        <li>Collect all pellets for bonus points</li>
-                        <li>Learn ghost patterns for better strategy</li>
-                    </ul>
-                    <button onclick="closeGamePreview(); window.location.href='pacbron.html'" class="mt-6 w-full pixel-btn bg-red-600 text-white py-3 rounded-lg font-bold">
-                        Play Now
-                    </button>
-                `;
-            }
-
-            modal.classList.add('active');
-        }
-
-        function closeGamePreview(event) {
-            if (event && event.target.id !== 'gamePreviewModal') return;
-            document.getElementById('gamePreviewModal').classList.remove('active');
-        }
-
-        // Social Sharing
-        function shareTwitter() {
-            const text = `I'm playing CoolBronGames! Just scored ${document.getElementById('flappyscoreStat').textContent} points in FlappyBron! Can you beat my score? 🏀`;
-            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${window.location.href}`;
-            window.open(url, '_blank');
-        }
-
-        function shareFacebook() {
-            const url = `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`;
-            window.open(url, '_blank');
-        }
-
-        function copyLink() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied to clipboard! Share it with friends.');
-            });
-        }
-
-        // Countdown Timer for Coming Soon game
-        function updateCountdown() {
-            const releaseDate = new Date('2026-03-31').getTime();
-            const now = new Date().getTime();
-            const distance = releaseDate - now;
-
-            if (distance > 0) {
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-                const timerElement = document.getElementById('countdownTimer');
-                if (timerElement) {
-                    timerElement.textContent = `${days}d ${hours}h ${minutes}m`;
-                }
-            }
-        }
-
-        updateCountdown();
-        setInterval(updateCountdown, 60000); // Update every minute
-
-        // Refresh stats periodically
-        setInterval(loadStats, 5000); // Update every 5 seconds when user is on page
-
-        // Firebase Leaderboard Functions
-        async function loadLeaderboards() {
-            try {
-                // Load FlappyBron leaderboard
-                const flappyScores = await getTopScores('FlappyBron', 10);
-                const flappyBody = document.getElementById('flappyleaderboardBody');
-                if (flappyScores.length > 0) {
-                    flappyBody.innerHTML = flappyScores.map((score, index) => `
-                        <tr>
-                            <td>#${index + 1}</td>
-                            <td>${score.playerName}</td>
-                            <td>${score.score.toLocaleString()}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    flappyBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
-                }
-
-                // Load PacBron leaderboard
-                const pacScores = await getTopScores('PacBron', 10);
-                const pacBody = document.getElementById('pacleaderboardBody');
-                if (pacScores.length > 0) {
-                    pacBody.innerHTML = pacScores.map((score, index) => `
-                        <tr>
-                            <td>#${index + 1}</td>
-                            <td>${score.playerName}</td>
-                            <td>${score.score.toLocaleString()}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    pacBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
-                }
-
-                // Load LeBron Fighter leaderboard
-                const fighterScores = await getTopScores('LeBronFighter', 10);
-                const fighterBody = document.getElementById('fighterleaderboardBody');
-                if (fighterScores.length > 0) {
-                    fighterBody.innerHTML = fighterScores.map((score, index) => `
-                        <tr>
-                            <td>#${index + 1}</td>
-                            <td>${score.playerName}</td>
-                            <td>${score.score.toLocaleString()}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    fighterBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem;">No scores yet. Be the first!</td></tr>';
-                }
-            } catch (error) {
-                console.log('Firebase not configured yet. Using local stats only.');
-            }
-        }
-
-        // Load leaderboards when page loads and every 10 seconds for real-time updates
-        loadLeaderboards();
-        setInterval(loadLeaderboards, 10000);
-    </script>
+    loadLeaderboards();
+    setInterval(loadLeaderboards, 15000);
+</script>
+</body>
+</html>

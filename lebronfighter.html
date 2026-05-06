@@ -532,15 +532,20 @@
     <div id="gameContainer">
         <canvas id="gameCanvas" width="1200" height="600"></canvas>
         
+        <!-- Pause Menu Overlay -->
+        <div id="pauseMenu" class="hidden" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(30,30,30,0.85); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <h2 style="color: #fff; margin-bottom: 30px;">PAUSED</h2>
+            <button id="resumeButton" style="margin-bottom: 20px; font-size: 1.2rem; padding: 10px 40px;">RESUME</button>
+            <button id="leaveButton" style="font-size: 1.2rem; padding: 10px 40px;">LEAVE FIGHT</button>
+        </div>
+
         <!-- Main Menu -->
         <div id="mainMenu">
             <h1>🏀 LEBRON FIGHTER 👑</h1>
             <p style="margin-bottom: 30px; font-size: 0.9rem;">GOAT EDITION</p>
             
             <button id="startCampaignButton">CAMPAIGN MODE</button>
-            <button id="startPracticeButton">PRACTICE MODE</button>
             <button id="start2PButtonMain">2 PLAYER VS</button>
-            <button id="shopButton">UPGRADE SHOP</button>
             <button onclick="window.location.href='lebronfighter-info.html'" style="background: #333; border-color: #666;">GAME INFO</button>
             <button onclick="window.location.href='index.html'" style="background: #333; border-color: #666;">BACK TO HOME</button>
         </div>
@@ -552,7 +557,7 @@
             
             <div class="shop-grid">
                 <div class="shop-item" style="cursor: pointer;" data-ultimate="theDecision">
-                    <h4>🔥 THE DECISION</h4>
+                    <h4>🔥 PAINT BEAST</h4>
                     <p>Devastating close-range attack</p>
                     <p>Damage: 25</p>
                     <button class="select-ultimate-btn" data-ultimate="theDecision">SELECT</button>
@@ -572,6 +577,8 @@
             </div>
             
             <button id="continueToLevelSelect" style="margin-top: 20px;">CONTINUE TO LEVEL SELECT</button>
+            <button id="startPracticeButton" style="margin-top: 10px;">PRACTICE MODE</button>
+            <button id="shopButton" style="margin-top: 10px;">UPGRADE SHOP</button>
             <button id="backFromUltimateSelect" style="background: #333; border-color: #666; margin-top: 10px;">BACK TO MENU</button>
         </div>
 
@@ -890,6 +897,7 @@
         let currentLevel = 1;
         let dummyType = 'still'; // 'still' or 'fighting'
         let damageNumbers = [];
+        let paused = false;
         
         // Player data (for shop/upgrades)
         let playerData = {
@@ -911,15 +919,25 @@
         const keys = {};
         document.addEventListener('keydown', (e) => {
             keys[e.code] = true;
-            
-            // ESC to exit practice mode
-            if (e.code === 'Escape' && gameMode === 'practice' && gameState === 'playing') {
-                resetGame();
-                e.preventDefault();
-                return;
+            // ESC to pause/unpause during a fight
+            if (e.code === 'Escape') {
+                if (gameState === 'playing' && !paused) {
+                    paused = true;
+                    showPauseMenu();
+                    e.preventDefault();
+                    return;
+                } else if (paused) {
+                    paused = false;
+                    hidePauseMenu();
+                    e.preventDefault();
+                    return;
+                } else if (gameMode === 'practice' && gameState === 'playing') {
+                    resetGame();
+                    e.preventDefault();
+                    return;
+                }
             }
-            
-            if (gameState === 'playing') {
+            if (gameState === 'playing' && !paused) {
                 e.preventDefault();
             }
         });
@@ -1499,7 +1517,7 @@
 
         // Game update function
         function update() {
-            if (gameState !== 'playing') return;
+            if (gameState !== 'playing' || paused) return;
             
             // Update round timer
             if (gameMode !== 'practice') {
@@ -2079,6 +2097,28 @@
             });
         }
         
+        // Pause menu logic
+        function showPauseMenu() {
+            document.getElementById('pauseMenu').classList.remove('hidden');
+        }
+        function hidePauseMenu() {
+            document.getElementById('pauseMenu').classList.add('hidden');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const resumeBtn = document.getElementById('resumeButton');
+            const leaveBtn = document.getElementById('leaveButton');
+            if (resumeBtn) resumeBtn.addEventListener('click', function() {
+                paused = false;
+                hidePauseMenu();
+            });
+            if (leaveBtn) leaveBtn.addEventListener('click', function() {
+                paused = false;
+                hidePauseMenu();
+                resetGame();
+                showMainMenu();
+            });
+        });
+        
         // Navigation functions
         function showMainMenu() {
             document.getElementById('mainMenu').classList.remove('hidden');
@@ -2239,7 +2279,10 @@
         });
         
         document.getElementById('continueToLevelSelect').addEventListener('click', () => {
+            // Hide ultimate select and show campaign (level select)
             showLevelSelect();
+            // Optionally, set a flag so ultimateSelect never reappears until a new campaign is started
+            // (No further action needed unless you want to block going back)
         });
         
         document.getElementById('backFromUltimateSelect').addEventListener('click', () => {
